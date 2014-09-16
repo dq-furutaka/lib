@@ -1,18 +1,18 @@
 <?php
 
 /**
- * 暗号化クラス
+ * 暗号化処理を行います。
+ * 
+ * ブロックアルゴリズムをサポートするmcryptライブラリを利用しています。
  * @author T.Morita
- * @version $Id$
- * @copyright cybird.co.jp
+ * @see <a href="http://php.net/manual/ja/book.mcrypt.php">Mcrypt</a>
  */
 class Cipher {
 
 	/**
-	 * Initialize Vectolの処理時の設定値を格納
-	 * @var binary string
+	 * @var string 初期化ベクトルの処理時の設定値を格納
 	 */
-	static protected $iv = NULL;
+	protected static $iv = NULL;
 
 	/**
 	 * コンストラクタ
@@ -30,10 +30,67 @@ class Cipher {
 
 	/**
 	 * データを暗号化する
-	 * @param 配列キー：value, key, iv, algorithm, mode, prefix, suffix
-	 * 								  パディング防止が必要な場合は、'prefix'と'suffix'を指定する。
-	 * 								  'prefix'と'suffix'には、メタ文字( . \ + * ? [ ^ ] ( $ ) )のみ指定できます。
-	 * @return 配列キー：encrypted, iv
+	 * @param array $arguments 暗号情報
+	 * 		<table>
+	 * 			<tr>
+	 * 				<td><b>key</b></td>
+	 * 				<td><b>type</b></td>
+	 * 				<td><b>require</b></td>
+	 * 				<td><b>default</b></td>
+	 * 				<td><b>description</b></td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>value</td>
+	 * 				<td>string</td>
+	 * 				<td>true</td>
+	 * 				<td></td>
+	 * 				<td>対象データ</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>key</td>
+	 * 				<td>string</td>
+	 * 				<td>true</td>
+	 * 				<td></td>
+	 * 				<td>暗号キー</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>iv</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td>指定されない場合生成される</td>
+	 * 				<td>初期化ベクトル</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>algorithm</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td>rijndael-128</td>
+	 * 					<td>MCRYPT_暗号名 定数のいずれか、 あるいはアルゴリズム名をあらわす文字列。</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>mode</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td>cbc</td>
+	 * 				<td>定数 MCRYPT_MODE_モード名、あるいは文字列 "ecb", "cbc", "cfb", "ofb", "nofb" ,"stream" のいずれか。</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>prefix</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td><td></td>
+	 * 				<td>接頭にパディングする文字列</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>suffix</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td></td>
+	 * 				<td>接尾にパディングする文字列</td>
+	 * 			</tr>
+	 * 		</table>
+	 * 		パディング防止が必要な場合は、'prefix'と'suffix'を指定する。<br>
+	 * 		'prefix'と'suffix'には、メタ文字( . \ + * ? [ ^ ] ( $ ) )のみ指定できます。
+	 * @return string|boolean 暗号化されたデータもしくはfalse
 	 */
 	public static function encrypt($arguments) {
 		// 引数のチェック
@@ -90,11 +147,68 @@ class Cipher {
 	}
 
 	/**
-	 * データを複号化する
-	 * @param 配列キー：value, key, ,iv, algorithm, mode, prefix, suffix
-	 * 								  パディング防止が必要な場合は、'prefix'と'suffix'を指定する。
-	 * 								  'prefix'と'suffix'には、メタ文字( . \ + * ? [ ^ ] ( $ ) )のみ指定できます。
-	 * @return string
+	 * データを復号化する
+	 * @param array $arguments 復号情報
+	 * 		<table>
+	 * 			<tr>
+	 * 				<td><b>key</b></td>
+	 * 				<td><b>type</b></td>
+	 * 				<td><b>require</b></td>
+	 * 				<td><b>default</b></td>
+	 * 				<td><b>description</b></td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>value</td>
+	 * 				<td>string</td>
+	 * 				<td>true</td>
+	 * 				<td></td>
+	 * 				<td>対象データ</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>key</td>
+	 * 				<td>string</td>
+	 * 				<td>true</td>
+	 * 				<td></td>
+	 * 				<td>暗号キー</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>iv</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td>指定されない場合生成される</td>
+	 * 				<td>初期化ベクトル</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>algorithm</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td>rijndael-128</td>
+	 * 					<td>MCRYPT_暗号名 定数のいずれか、 あるいはアルゴリズム名をあらわす文字列。</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>mode</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td>cbc</td>
+	 * 				<td>定数 MCRYPT_MODE_モード名、あるいは文字列 "ecb", "cbc", "cfb", "ofb", "nofb" ,"stream" のいずれか。</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>prefix</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td><td></td>
+	 * 				<td>接頭にパディングする文字列</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>suffix</td>
+	 * 				<td>string</td>
+	 * 				<td>false</td>
+	 * 				<td></td>
+	 * 				<td>接尾にパディングする文字列</td>
+	 * 			</tr>
+	 * 		</table>
+	 * 		パディング防止が必要な場合は、'prefix'と'suffix'を指定する。<br>
+	 * 		'prefix'と'suffix'には、メタ文字( . \ + * ? [ ^ ] ( $ ) )のみ指定できます。
+	 * @return string|boolean 復号化されたデータもしくはfalse
 	 */
 	public static function decrypt($arguments) {
 		// 引数のチェック
@@ -143,8 +257,8 @@ class Cipher {
 	}
 
 	/**
-	 * 現在設定されている、最後に使用されたIVを返す
-	 * @return binary string
+	 * 現在設定されている、最後に使用されたIV(初期化ベクトル)を返す
+	 * @return string 初期化ベクトル
 	 */
 	public static function getNowIV(){
 		return self::$iv;
@@ -152,9 +266,10 @@ class Cipher {
 
 	/**
 	 * PKCSでpadする(5、7に有効)
-	 * @param unknown $text
-	 * @param unknown $blocksize
-	 * @return string
+	 * @param string $text 対象文字列
+	 * @param integer $blocksize ブロックサイズ
+	 * @return string padされた文字列
+	 * @see <a href="http://ja.wikipedia.org/wiki/PKCS">PKCS</a>
 	 */
 	public static function pad($text, $blocksize){
 		$pad = $blocksize - (strlen($text) % $blocksize);
@@ -163,8 +278,9 @@ class Cipher {
 
 	/**
 	 * PKCSでunpadする(5、7に有効)
-	 * @param unknown $text
-	 * @return string
+	 * @param string $text 対象文字列
+	 * @return string unpadされた文字列
+	 * @see <a href="http://ja.wikipedia.org/wiki/PKCS">PKCS</a>
 	 */
 	public static function unpad($text){
 		$pad = ord($text{strlen($text)-1});
