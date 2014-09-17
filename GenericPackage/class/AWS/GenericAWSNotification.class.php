@@ -5,16 +5,35 @@ use Aws\Common\Aws;
 use Aws\Common\Enum\Region;
 use Aws\Sns\SnsClient;
 
+/**
+ * Amazon Simple Notification Service(Amazon SNS)を利用してモバイルデバイスに対してプッシュ通知を行います。
+ *
+ * @author saimushi
+ * @see <a href="http://aws.amazon.com/sns/">Amazon Simple Notification Service</a>
+ * @see <a href="http://docs.aws.amazon.com/aws-sdk-php/guide/latest/service-sns.html">AWS SDK for PHP documentation</a>
+ */
 class GenericAWSNotification
 {
+	/**
+	 * @var integer 初期化フラグ
+	 */
 	protected $_initialized = FALSE;
 
-	// Amazon SDKのインスタンス
+	/**
+	 * @var Aws Amazon SDKのインスタンス
+	 */
 	protected $_AWS = NULL;
 
-	// ManagementConsoleで登録したアプリ(APNS_SANDBOX:開発用)
+	/**
+	 * @var string ManagementConsoleで登録したアプリ(APNS_SANDBOX:開発用)
+	 */
 	protected $_arnBase = NULL;
 
+	/**
+	 * 初期化します。
+	 * 
+	 * Configureの値をもとにAmazon SNSの初期化を行います。
+	 */
 	protected function _init(){
 		if(FALSE === $this->_initialized){
 			$baseArn = NULL;
@@ -81,7 +100,18 @@ class GenericAWSNotification
 	}
 
 	/**
-	 * Push通知先(EndpointArn)を登録
+	 * Push通知先(EndpointArn)を登録します。
+	 *
+	 * @param string $argDevicetoken デバイストークン
+	 * @param string $argDeviceType デバイスタイプ
+	 * 		<ul>
+	 * 			<li>iOS</li>
+	 * 			<li>iPhone</li>
+	 * 			<li>iPad</li>
+	 * 			<li>iPod</li>
+	 * 			<li>Android</li>
+	 * 		</ul>
+	 * @return Model|boolean 結果もしくはfalse
 	 */
 	public function createPlatformEndpoint($argDevicetoken, $argDeviceType) {
 		$this->_init();
@@ -111,10 +141,24 @@ class GenericAWSNotification
 	}
 
 	/**
-	 * 通知
+	 * メッセージを通知します。
+	 *
+	 * @param string $argDeviceIdentifier デバイス識別子
+	 * @param string $argDeviceType デバイスタイプ
+	 * 		<ul>
+	 * 			<li>iOS</li>
+	 * 			<li>iPhone</li>
+	 * 			<li>iPad</li>
+	 * 			<li>iPod</li>
+	 * 			<li>Android</li>
+	 * 		</ul>
+	 * @param string $argMessage メッセージ
+	 * @param integer $argBadge バッジ数
+	 * @param string $argCustomURLScheme カスタムURLスキーマ
+	 * @return Model|boolean 結果もしくはfalse
 	 */
-	public function pushMessage($argDeviceIdentifier, $argDeviceType, $argMessage, $argPadge=1, $argCustomURLScheme=NULL) {
-		$message = array('alert'=>$argMessage, 'badge' => $argPadge, 'sound' => 'default');
+	public function pushMessage($argDeviceIdentifier, $argDeviceType, $argMessage, $argBadge=1, $argCustomURLScheme=NULL) {
+		$message = array('alert'=>$argMessage, 'badge' => $argBadge, 'sound' => 'default');
 		if(NULL !== $argCustomURLScheme){
 			$message['scm'] = $argCustomURLScheme;
 		}
@@ -122,7 +166,49 @@ class GenericAWSNotification
 	}
 
 	/**
-	 * 通知(JSON)
+	 * メッセージを通知します。
+	 *
+	 * @param string $argDeviceIdentifier デバイス識別子
+	 * @param string $argDeviceType デバイスタイプ
+	 * 		<ul>
+	 * 			<li>iOS</li>
+	 * 			<li>iPhone</li>
+	 * 			<li>iPad</li>
+	 * 			<li>iPod</li>
+	 * 			<li>Android</li>
+	 * 		</ul>
+	 * @param array $argments メッセージ詳細
+	 * 		<table>
+	 * 			<tr>
+	 * 				<td><b>key</b></td>
+	 * 				<td><b>type</b></td>
+	 * 				<td><b>require</b></td>
+	 * 				<td><b>default</b></td>
+	 * 				<td><b>description</b></td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>alert</td>
+	 * 				<td>string</td>
+	 * 				<td>true</td>
+	 * 				<td></td>
+	 * 				<td>メッセージ</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>badge</td>
+	 * 				<td>integer</td>
+	 * 				<td>true</td>
+	 * 				<td>1</td>
+	 * 				<td>バッジ数</td>
+	 * 			</tr>
+	 * 			<tr>
+	 * 				<td>sound</td>
+	 * 				<td>string</td>
+	 * 				<td>true</td>
+	 * 				<td>default</td>
+	 * 				<td>通知音</td>
+	 * 			</tr>
+	 * 		</table>
+	 * @return Model|boolean 結果もしくはfalse
 	 */
 	public function pushJson($argDeviceIdentifier, $argDeviceType, $argments) {
 		$this->_init();

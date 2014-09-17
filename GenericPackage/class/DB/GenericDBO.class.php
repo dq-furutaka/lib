@@ -1,48 +1,51 @@
 <?php
 
 /**
- * ADODBを利用したDBクラス(Singletonパターン実装)
+ * ADODBを利用したDBクラス
+ * 
+ * Singletonパターン実装
+ * @see <a href="http://adodb.sourceforge.net/">ADOdb</a>
  */
 class GenericDBO {
 
 	/**
-	 * DBインスタンス保持用
-	 * @var instance
+	 * @var array DBインスタンス保持用
 	 */
 	private static $_DBInstance = NULL;
 
 	/**
-	 * DSN情報保持用
-	 * @var instance
+	 * @var array DSN情報保持用
 	 */
 	private static $_DSN = NULL;
 
 	/**
-	 * トランザクション保存用
-	 * @var transaction
+	 * @var array トランザクション保存用
 	 */
 	private static $_transaction = NULL;
 
 	/**
-	 * インスタンス化されて使用された場合、DSN情報を取っておく
-	 * @var transaction
+	 * @var string インスタンス化されて使用された場合、DSN情報を取っておく
 	 */
 	public $DSN = NULL;
 
 	/**
-	 * インスタンス化されて使用された場合、DBType(mysql,oracle等の)情報を取っておく
-	 * @var transaction
+	 * インスタンス化されて使用された場合、DBType情報を取っておく
+	 * <ul><li>mysql</li><li>oracle</li><li>postgres</li></ul>
+	 * @var string
 	 */
-
 	public $DBType = NULL;
 
 	/**
-	 * インスタンス化されて使用された場合、DSN情報を取っておく
-	 * @var transaction
+	 * @var string インスタンス化されて使用された場合、DSN情報を取っておく
 	 */
 	public $dbidentifykey = NULL;
 
-	public static  function sharedInstance($argDSN="Default"){
+	/**
+	 * DBインスタンスを取得
+	 * @param string $argDSN DSN
+	 * @return GenericDBO DB
+	 */
+	public static function sharedInstance($argDSN="Default"){
 		static $DBO = array();
 		if(!isset($DBO[$argDSN])){
 			$DSN = $argDSN;
@@ -56,6 +59,7 @@ class GenericDBO {
 
 	/**
 	 * インスタンス化対応
+	 * @param string $argDSN DSN
 	 */
 	public function __construct($argDSN=NULL){
 		if(NULL !==$argDSN && strlen($argDSN) > 0){
@@ -148,6 +152,9 @@ class GenericDBO {
 
 	/**
 	 * クエリー実行とDBインスタンスの初期化を同時に行う
+	 * @param string $argQuery クエリ
+	 * @param array $argBinds バインド
+	 * @return 実行結果
 	 */
 	public function execute($argQuery, $argBinds = NULL){
 		$instanceIndex = self::_initDB();
