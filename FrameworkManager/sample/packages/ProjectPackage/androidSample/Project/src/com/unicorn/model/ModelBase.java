@@ -1,5 +1,7 @@
 package com.unicorn.model;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,13 +17,17 @@ import com.unicorn.project.Constant;
 import com.unicorn.project.R;
 import com.unicorn.utilities.AsyncHttpClientAgent;
 import com.unicorn.utilities.Log;
-import com.unicorn.utilities.PublicFunction;
+import com.unicorn.utilities.Utilitis;
 
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 
+/**
+* ModelBaseはUnicornとRest通信を行う為のベースクラスです。
+* @author　c1363
+*/
 public class ModelBase {
 
 	public enum loadResourceMode {
@@ -52,7 +58,10 @@ public class ModelBase {
 	public Handler completionHandler;
 	public Handler modelBaseHandler;
 
-	//コンストラクタ
+	/**
+	 * コンストラクタです
+	 * @param argContext Contextが入っています
+	 */
 	public ModelBase(Context argContext) {
 		context = argContext;
 		protocol = "";
@@ -75,7 +84,14 @@ public class ModelBase {
 		completionHandler = null;
 	}
 
-	//コンストラクタ
+	/**
+	 * オーバーロードされたコンストラクタです
+	 * @param argContext Contextが入っています
+	 * @param argProtocol プロトコルが入っています
+	 * @param argDomain ドメインが入っています
+	 * @param argURLBase ドメイン以下のディレクトリ名が入っています
+	 * @param argTokenKeyName Cookieに保存するトークンのkey名が入っています
+	 */
 	public ModelBase(Context argContext, String argProtocol, String argDomain, String argURLBase,
 			String argTokenKeyName) {
 		this(argContext);
@@ -85,7 +101,15 @@ public class ModelBase {
 		tokenKeyName = argTokenKeyName;
 	}
 
-	//コンストラクタ
+	/**
+	 * オーバーロードされたコンストラクタです
+	 * @param argContext Contextが入っています
+	 * @param argProtocol プロトコルが入っています
+	 * @param argDomain ドメインが入っています
+	 * @param argURLBase ドメイン以下のディレクトリ名が入っています
+	 * @param argTokenKeyName Cookieに保存するトークンのkey名が入っています
+	 * @param argTimeout Timeoutまでの時間が入っています
+	 */
 	public ModelBase(Context argContext, String argProtocol, String argDomain, String argURLBase,
 			String argTokenKeyName, int argTimeout) {
 		this(argContext);
@@ -96,7 +120,16 @@ public class ModelBase {
 		timeout = argTimeout;
 	}
 
-	//コンストラクタ
+	/**
+	 * オーバーロードされたコンストラクタです
+	 * @param argContext Contextが入っています
+	 * @param argProtocol プロトコルが入っています
+	 * @param argDomain ドメインが入っています
+	 * @param argURLBase ドメイン以下のディレクトリ名が入っています
+	 * @param argTokenKeyName Cookieに保存するトークンのkey名が入っています
+	 * @param argCryptKey トークンの暗号化に使うKEYが入っています
+	 * @param argCryptIV トークンの暗号化に使うIVが入っています
+	 */
 	public ModelBase(Context argContext, String argProtocol, String argDomain, String argURLBase,
 			String argTokenKeyName, String argCryptKey, String argCryptIV) {
 		this(argContext, argProtocol, argDomain, argURLBase, argTokenKeyName);
@@ -104,7 +137,17 @@ public class ModelBase {
 		cryptIV = argCryptIV;
 	}
 
-	//コンストラクタ
+	/**
+	 * オーバーロードされたコンストラクタです
+	 * @param argContext Contextが入っています
+	 * @param argProtocol プロトコルが入っています
+	 * @param argDomain ドメインが入っています
+	 * @param argURLBase ドメイン以下のディレクトリ名が入っています
+	 * @param argTokenKeyName Cookieに保存するトークンのkey名が入っています
+	 * @param argCryptKey トークンの暗号化に使うKEYが入っています
+	 * @param argCryptIV トークンの暗号化に使うIVが入っています
+	 * @param argTimeout Timeoutまでの時間が入っています
+	 */
 	public ModelBase(Context argContext, String argProtocol, String argDomain, String argURLBase,
 			String argTokenKeyName, String argCryptKey, String argCryptIV, int argTimeout) {
 		this(argContext, argProtocol, argDomain, argURLBase, argTokenKeyName, argCryptKey,
@@ -112,7 +155,11 @@ public class ModelBase {
 		timeout = argTimeout;
 	}
 
-	/* RESTfulURLの生成 */
+	/**
+	 * REST通信を行う為のURLの生成を行うメソッドです
+	 * @param resourceId IDが入っています
+	 * @return 生成したURLが入っています。
+	 */
 	public String createURLString(String resourceId) {
 		String url = "";
 		if (null != resourceId) {
@@ -127,7 +174,12 @@ public class ModelBase {
 		return url;
 	}
 
-	// モデルを参照する
+	/**
+	 * モデルを参照するメソッドです
+	 * 通信結果を元に処理を行う場合はload(Hanler argCompletionHandler)を使用し、
+	 * Hanler内で処理を分岐して下さい。
+	 * @return IDが無指定の場合はfalse、それ以外はtrueを返却します。
+	 */
 	public boolean load() {
 		if (null == ID || "".equals(ID)) {
 			// ID無指定は単一モデル参照エラー
@@ -136,7 +188,12 @@ public class ModelBase {
 		return load(loadResourceMode.myResource, null);
 	}
 
-	// モデルを参照する
+	/**
+	 * モデルを参照するメソッドです
+	 * 通信結果は引数として渡されたHandlerに渡されます。
+	 * @param argCompletionHandler 通信後に呼び出すhandlerが入っています
+	 * @return IDが無指定の場合はfalse、それ以外はtrueを返却します。
+	 */
 	public boolean load(Handler argCompletionHandler) {
 		if (null == ID) {
 			// ID無指定は単一モデル参照エラー
@@ -146,37 +203,78 @@ public class ModelBase {
 		return load(loadResourceMode.myResource, null);
 	}
 
-	// モデルを参照する
+	/**
+	 * モデルをlist参照するメソッドです
+	 * 通信結果を元に処理を行う場合はlist(Hanler argCompletionHandler)を使用し、
+	 * Hanler内で処理を分岐して下さい。
+	 * @return trueを返却します。
+	 */
 	public boolean list() {
 		return load(loadResourceMode.listedResource, null);
 	}
-	// モデルを参照する
+
+	/**
+	 * モデルをlist参照するメソッドです
+	 * 通信結果は引数として渡されたHandlerに渡されます。
+	 * @param argCompletionHandler 通信後に呼び出すhandlerが入っています
+	 * @return trueを返却します。
+	 */
 	public boolean list(Handler argCompletionHandler) {
 		completionHandler = argCompletionHandler;
 		return load(loadResourceMode.listedResource, null);
 	}
 
-	//条件を指定してモデルを参照する
+	/**
+	 * モデルを条件付きで参照するメソッドです
+	 * 通信結果を元に処理を行う場合はquery(HashMap<String, Object> argWhereParams, Handler argCompletionHandler)
+	 * を使用し、Hanler内で処理を分岐して下さい。
+	 * @param argWhereParams 通信時に付与するパラメータがMapで入っています
+	 * @return trueを返却します。
+	 */
 	public boolean query(HashMap<String, Object> argWhereParams) {
 		return load(loadResourceMode.automaticResource, argWhereParams);
 	}
 
-	//条件を指定してモデルを参照する
+	/**
+	 * モデルを条件付きで参照するメソッドです
+	 * 通信結果は引数として渡されたHandlerに渡されます。
+	 * @param argWhereParams 通信時に付与するパラメータがMapで入っています
+	 * @param argCompletionHandler 通信後に呼び出すhandlerが入っています
+	 * @return trueを返却します。
+	 */
 	public boolean query(HashMap<String, Object> argWhereParams, Handler argCompletionHandler) {
 		completionHandler = argCompletionHandler;
 		return load(loadResourceMode.automaticResource, argWhereParams);
 	}
 
+	/**
+	 * モデルを保存するメソッドです
+	 * @return trueを返却します。
+	 */
 	public boolean save() {
 		completionHandler = null;
 		return true;
 	}
 
+	/**
+	 * モデルを保存するメソッドです
+	 * @param argCompletionHandler 通信後に呼び出すhandlerが入っています
+	 * @return trueを返却します。
+	 */
 	public boolean save(Handler argCompletionHandler) {
 		completionHandler = argCompletionHandler;
 		return true;
 	}
 
+	/**
+	 * モデルを保存するメソッドです
+	 * @param argSaveParams 通信後に呼び出すhandlerが入っています
+	 * @param argUploadData 通信後に呼び出すhandlerが入っています
+	 * @param argUploadDataName 通信後に呼び出すhandlerが入っています
+	 * @param argUploadDataContentType 通信後に呼び出すhandlerが入っています
+	 * @param argUploadDataKey 通信後に呼び出すhandlerが入っています
+	 * @return trueを返却します。
+	 */
 	public boolean save(HashMap<String, Object> argSaveParams, byte[] argUploadData,
 			String argUploadDataName, String argUploadDataContentType, String argUploadDataKey) {
 
@@ -316,8 +414,12 @@ public class ModelBase {
 		return true;
 	}
 
-	/* ファイルを一つのモデルリソースと見立てて保存(アップロード)する */
-	/* PUTメソッドでのアップロード処理を強制します！ */
+	/**
+	 * ファイルを一つのモデルリソースと見立ててアップロードする。
+	 * ID無しでのアップロードは許可しない為強制PUT
+	 * @param argUploadData アップロードデータのbyte[]
+	 * @return ID無しの場合はfalse,それ以外はtrueを返却
+	 */
 	public boolean _save(byte[] argUploadData) {
 		String url = createURLString(ID);
 
@@ -392,6 +494,12 @@ public class ModelBase {
 		return false;
 	}
 
+	/**
+	 * ファイルを一つのモデルリソースと見立ててアップロードする。
+	 * ID無しでのアップロードは許可しない為強制PUT
+	 * @param argsaveParams postするデータ
+	 * @return trueを返却
+	 */
 	public boolean save(HashMap<String, Object> argsaveParams) {
 
 		String url = createURLString(ID);
@@ -545,10 +653,15 @@ public class ModelBase {
 				}
 			});
 		}
-		return false;
+		return true;
 	}
 
-	//argsaveParamsを元にsaveのURLを生成する
+	/**
+	 * GET通信をする際にパラメータをURLにつける
+	 * @param url 元のURLが入っています
+	 * @param argsaveParams getパラメータのmap
+	 * @return 生成されたurlが返却されます
+	 */
 	public String createGetURl(String url, HashMap<String, Object> argsaveParams) {
 		for (Iterator<Entry<String, Object>> it = argsaveParams.entrySet().iterator(); it.hasNext();) {
 			HashMap.Entry<String, Object> entry = (HashMap.Entry<String, Object>) it.next();
@@ -561,6 +674,17 @@ public class ModelBase {
 		return url;
 	}
 
+	/**
+	 * IDを元にモデル参照を行います
+	 * ただしloadResourceModeがautomaticResourceの場合のみargWhereParamsのデータをもとに
+	 * 条件検索を行う事ができます。
+	 * @param loadResourceMode モデル参照するタイプ
+	 * myResource　自分のデータ
+	 * listedResource　リストデータ
+	 * automaticResource　自動判別
+	 * @param argWhereParams　条件つきで参照する場合のパラメータのmap
+	 * @return trueを返却します
+	 */
 	public boolean load(loadResourceMode argLoadResourceMode, HashMap<String, Object> argWhereParams) {
 
 		switch (argLoadResourceMode) {
@@ -579,8 +703,10 @@ public class ModelBase {
 		return true;
 	}
 
-	//通信レスポンスデータを元にmodelにデータをセットする。
-	//暫定で0番目を指定
+	/**
+	 * 通信レスポンスデータを元にmodelにデータをセットする。
+	 * リスト参照など、複数データが返却された場合は先頭のデータがセットされます。
+	 */
 	public void setModelData() {
 		total = responseList.size();
 		if (0 < total) {
@@ -588,8 +714,11 @@ public class ModelBase {
 		}
 	}
 
-	//0番目のHashMapを元にmodelにデータをセットする。
-	//セット部分は各モデルで_setModelDataをOverrideして実装して下さい。
+	/**
+	 * listの0番目のHashMapを元にmodelにデータをセットする。
+	 * セット部分は各モデルで_setModelDataをOverrideして実装して下さい
+	 * @param list モデルにセットする元データ(jsonのArray) 
+	 */
 	public void setModelData(ArrayList<HashMap<String, Object>> list) {
 		responseList = list;
 		total = responseList.size();
@@ -599,8 +728,11 @@ public class ModelBase {
 		}
 	}
 
-	//argIndex番目のHashMapを元にmodelにデータをセットする。
-	//セット部分は各モデルで_setModelDataをOverrideして実装して下さい。
+	/**
+	 * listのargIndex番目のHashMapを元にmodelにデータをセットする。
+	 * セット部分は各モデルで_setModelDataをOverrideして実装して下さい
+	 * @param list モデルにセットする元データ(jsonのArray) 
+	 */
 	public void setModelData(ArrayList<HashMap<String, Object>> list, int argIndex) {
 		responseList = list;
 		total = list.size();
@@ -610,14 +742,28 @@ public class ModelBase {
 		}
 	}
 
+	/**
+	 * setModelDataから呼ばれるメソッド
+	 * 各モデルでOverrideして実装。モデル毎の専用変数にデータを入れて下さい
+	 * @param map モデルにセットする元データ(jsonのMap) 
+	 */
 	public void _setModelData(HashMap<String, Object> map) {
 
 	}
 
+	/**
+	 * モデルからモデル生成の元データとなるMapを生成する
+	 * 各モデルでOverrideして実装。
+	 * @return trueを返却します
+	 */
 	public HashMap<String, Object> convertModelData() {
 		return null;
 	}
 
+	/**
+	 * 引数でわたされたresourceIdのモデルを参照する
+	 * @param argWhereParams　条件をしてして参照する場合に渡すMap
+	 */
 	public void _load(String resourceId, HashMap<String, Object> argWhereParams) {
 
 		String url = createURLString(resourceId);
@@ -690,7 +836,10 @@ public class ModelBase {
 		});
 	}
 
-	//handlerがある場合mainスレッドに制御を戻す
+	/**
+	 * handlerがnullで無い場合、通信結果をhandlerに渡す
+	 * @param msg　通信結果が格納されています。
+	 */
 	public void returnMainTheread(Message msg) {
 		if (completionHandler != null) {
 			completionHandler.sendMessage(msg);
@@ -698,7 +847,13 @@ public class ModelBase {
 		}
 	}
 
-	//JsonArrayをArrayListに変換
+	/**
+	 * JSONArrayをパースしてArrayListに変換します
+	 * JSONArray内のJSONObjectはcreateMapFromJSONObjectでHashMap<String,Object>に変換されます
+	 * @param data JSONArrayが格納されています
+	 * @throws JSONException パースに失敗した場合throwされます
+	 * @return JsonArrayをパースした結果
+	 */
 	public ArrayList<HashMap<String, Object>> createArrayFromJSONArray(JSONArray data)
 			throws JSONException {
 		ArrayList<HashMap<String, Object>> array = new ArrayList<HashMap<String, Object>>();
@@ -709,7 +864,13 @@ public class ModelBase {
 		return array;
 	}
 
-	//JsonObjectをkey,valueでHashMapに変換
+	/**
+	 * JSONObjectをパースしてHashMap<String,Object>に変換します
+	 * JSONObject内にJSONArrayがあった場合はcreateArrayFromJSONArrayでArrayListへ変換されます
+	 * @param data JSONObjectが格納されています
+	 * @throws JSONException パースに失敗した場合throwされます
+	 * @return JsonObjectをパースした結果
+	 */
 	public HashMap<String, Object> createMapFromJSONObject(JSONObject data) throws JSONException {
 		HashMap<String, Object> map = new HashMap<String, Object>();
 		Iterator<?> keys = data.keys();
@@ -726,33 +887,55 @@ public class ModelBase {
 		}
 		return map;
 	}
-	
-	/* 特殊なメソッド1 インクリメント(加算) */
-	public boolean increment(){
-	    return true;
-	}
-	
-	public boolean _increment(HashMap<String,Object> argSaveParams){
-	    if(null != ID){
-	    	return save(argSaveParams);
-	    }
-	    // インクリメントはID指定ナシはエラー！
-	    return false;
+
+	/**
+	 * model内のあるデータを1加算する場合に使用する目的のメソッド
+	 * 各モデルでorrverrideして使用
+	 * 各モデルでの実装内容：目的の変数を加算してreplacedをtrueにして_incrementを呼び出します
+	 * @return _incrementメソッドをコールした戻り値が返ります
+	 */
+	public boolean increment() {
+		return true;
 	}
 
-	/* 特殊なメソッド2 デクリメント(減算) */
-	public boolean decrement(){
-	    return true;
+	/**
+	 * modelbaseを継承した子クラスのincrementから呼ばれます。
+	 * @return _incrementメソッドをコールした戻り値が返ります
+	 */
+	public boolean _increment(HashMap<String, Object> argSaveParams) {
+		if (null != ID) {
+			return save(argSaveParams);
+		}
+		// インクリメントはID指定ナシはエラー！
+		return false;
 	}
 
-	public boolean _decrement(HashMap<String,Object> argSaveParams){
-	    if(null != ID){
-	        return save(argSaveParams);
-	    }
-	    // インクリメントはID指定ナシはエラー！
-	    return false;
+	/**
+	 * model内のあるデータを1減算する場合に使用する目的のメソッド
+	 * 各モデルでorrverrideして使用
+	 * 各モデルでの実装内容：目的の変数を減算してreplacedをtrueにして_decrementを呼び出します
+	 * @return _decrementメソッドをコールした戻り値が返ります
+	 */
+	public boolean decrement() {
+		return true;
 	}
 
+	/**
+	 * modelbaseを継承した子クラスのdecrementから呼ばれます。
+	 * @return _decrementメソッドをコールした戻り値が返ります
+	 */
+	public boolean _decrement(HashMap<String, Object> argSaveParams) {
+		if (null != ID) {
+			return save(argSaveParams);
+		}
+		// インクリメントはID指定ナシはエラー！
+		return false;
+	}
+
+	/**
+	 * total件数が現在のindexより多い場合次のモデルデータに変更する
+	 * @return 次のモデルが存在しない場合false、それ以外はtrueを返す
+	 */
 	public boolean next() {
 		if (index < responseList.size() - 1) {
 			index++;
@@ -762,22 +945,61 @@ public class ModelBase {
 		return false;
 	}
 
+	/**
+	 * argIndex番目のモデルデータを取得します
+	 * @param argIndex 何番目のmodelを取得するか
+	 * @return argIndex番目のモデル
+	 */
 	public ModelBase objectAtIndex(int argIndex) {
 		ModelBase nextModel = null;
 		if (0 < total && argIndex < responseList.size()) {
-			nextModel = new ModelBase(context, protocol, domain, urlbase, tokenKeyName, cryptKey,
-					cryptIV, timeout);
-			nextModel.setModelData(responseList, argIndex);
+			Class<?> cls;
+
+			Constructor<?> constructor = null;
+			// 引数の型を定義
+			Class<Context> contextParam = Context.class;
+			Class<String> stringParam = String.class;
+
+			String className = this.getClass().getName();
+			try {
+				cls = Class.forName(className);
+				constructor = cls.getConstructor(contextParam, stringParam, stringParam,
+						stringParam, stringParam, stringParam, stringParam, Integer.TYPE);
+				// 引数を渡してオブジェクトを生成する
+				nextModel = (ModelBase) constructor.newInstance(context, protocol, domain, urlbase,
+						tokenKeyName, cryptKey, cryptIV, timeout);
+				nextModel.setModelData(responseList, argIndex);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
 		}
 		return nextModel;
 	}
 
+	/**
+	 * argIndex番目にモデルを挿入します
+	 * @param model 挿入するモデル
+	 * @param argIndex 何番目に挿入するか
+	 */
 	public void insertObject(ModelBase model, int argIndex) {
 		HashMap<String, Object> response = model.convertModelData();
 		responseList.add(argIndex, response);
 		total = responseList.size();
 	}
-
+	
+	/**
+	 * argIndex番目のモデルを置き換えます
+	 * @param model 置き換えるモデル
+	 * @param argIndex 何番目に挿入するか
+	 */
 	public void replaceObject(ModelBase model, int argIndex) {
 		HashMap<String, Object> response = model.convertModelData();
 		responseList.remove(argIndex);
@@ -785,13 +1007,33 @@ public class ModelBase {
 		total = responseList.size();
 	}
 
+	/**
+	 * argIndex番目のモデルを削除します
+	 * @param argIndex 何番目のモデルを削除するか
+	 */
 	public void removeObject(int argIndex) {
 		responseList.remove(argIndex);
 		total = responseList.size();
 	}
 
-	//activityに管理させる為、引数にactivityを追加
-	public void showRequestError(int argStatusCode,Activity activity) {
+	/**
+	 * モデルデータを全件ArrayListにして返します
+	 * @return　全件分のArrayList<ModelBase>
+	 */
+	public ArrayList<ModelBase> toArray() {
+		ArrayList<ModelBase> array = new ArrayList<ModelBase>();
+		for (int i = 0; i < total; i++) {
+			array.add(objectAtIndex(i));
+		}
+		return array;
+	}
+
+	/**
+	 * エラーダイアログを表示します
+	 * @param argStatusCode エラーのステータスコード
+	 * @param activity　このダイアログを管理するActivity（最前面のactivity)
+	 */
+	public void showRequestError(int argStatusCode, Activity activity) {
 		String errorMsg = context.getString(R.string.errorMsgTimeout);
 		if (0 < argStatusCode) {
 			errorMsg = context.getString(R.string.errorMsgServerError);
@@ -810,7 +1052,7 @@ public class ModelBase {
 		}
 
 		if (context != null) {
-			PublicFunction.showAlert(context, errorMsg,activity);
+			Utilitis.showAlert(context, errorMsg, activity);
 		}
 	}
 }
