@@ -1,5 +1,5 @@
 PEARやfuel、ADODB等、外部ベンダーが作成したモジュールの置き場所として利用して下さい。
-HBOPでは
+UNICORNでは
 ・adodb5をデータベースモジュールのコアとして
 ・PEARのHTTPRequest2をHTTPRequestクライアントモジュールのコアとして
 ・simple_html_domをTemplateエンジンモジュールのコアとして

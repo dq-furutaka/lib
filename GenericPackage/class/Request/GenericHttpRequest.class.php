@@ -2,10 +2,11 @@
 
 /**
  * HTTP_Request2操作のラッパークラス
- * @author 
+ * @author
  */
-class GenericHttpRequest{
-	public static function requestToPostMethod($argURL, $argParams=NULL, $argFiles=NULL, $argTimeOut=60){
+class GenericHttpRequest
+{
+	public static function requestToPostMethod($argURL, $argParams=NULL, $argFiles=NULL, $argHeaders=NULL, $argTimeOut=60){
 		$HttpRequestObj = new HTTP_Request2();
 		$urls = parse_url($argURL);
 		if(isset($urls["user"]) && isset($urls["pass"])){
@@ -42,10 +43,14 @@ class GenericHttpRequest{
 			}
 		}
 
+		if(is_array($argHeaders)){
+			$HttpRequestObj->setHeader($argHeaders);
+		}
+
 		// リクエストを送信
 		$response = $HttpRequestObj->send();
 		// レスポンスのボディ部を表示
-		return $response;
+		RETURN $response;
 	}
 }
 

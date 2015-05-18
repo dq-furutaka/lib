@@ -43,11 +43,19 @@
 		<package>Session</package>
 		<link>default.implement.Auth/Auth</link>
 	</Auth>
-	<Session>
+	<!-- DB版 -->
+	<!--Session>>
 		<package>DBO</package>
 		<link>default.interface.Session/SessionIO</link>
 		<link>default.abstract.Session/SessionDataDB</link>
 		<link mapfrom="SessionDB" mapto="Session">default.implement.Session/SessionDB</link>
+	</Session-->
+	<!-- PECL:Memcache版 -->
+	<Session>
+		<package>MCO</package>
+		<link>default.interface.Session/SessionIO</link>
+		<link>default.abstract.Session/SessionDataMemcache</link>
+		<link mapfrom="SessionMemcache" mapto="Session">default.implement.Session/SessionMemcache</link>
 	</Session>
 	<MVCControllerBase>
 		<link>default.interface.MVC/MVCController</link>
@@ -82,6 +90,12 @@
 		<package>RestControllerBase</package>
 		<link>default.controlmain.Rest</link>
 	</Rest>
+	<BaseAppendFilter>
+		<link>default.controlmain.Filter/BaseAppendFilter</link>
+	</BaseAppendFilter>
+	<BasePrependFilter>
+		<link>default.controlmain.Filter/BasePrependFilter</link>
+	</BasePrependFilter>
 	<MVCAppendFilter>
 		<link mapfrom="BaseAppendFilter" mapto="MVCAppendFilter">default.controlmain.Filter/BaseAppendFilter</link>
 	</MVCAppendFilter>
@@ -96,7 +110,7 @@
 	</StaticPrependFilter>
 	<Utilities>
 		<link mapfrom="Cipher" mapto="Crypt">default.implement.Cipher/Cipher</link>
-		<link>default.implement.Utilities/Utilities</link>
+		<link mapfrom="GenericUtilities" mapto="Utilities">default.implement.Utilities/GenericUtilities</link>
 	</Utilities>
 	<Validations>
 		<link mapfrom="GenericValidations" mapto="Validations">default.implement.Utilities/GenericValidations</link>
@@ -106,6 +120,9 @@
 		<link>default.adodb5/adodb.inc.php</link>
 		<link mapfrom="GenericDBO" mapto="DBO">default.implement.DB/GenericDBO</link>
 	</DBO>
+	<MCO>
+		<link mapfrom="GenericMemcache" mapto="MCO">default.implement.KVS/GenericMemcache.class.php</link>
+	</MCO>
 	<ORMapper>
 		<package>DBO</package>
 		<link renamefrom="GenericModel" renameto="Model">default.interface.ORM/GenericModel</link>
@@ -118,9 +135,6 @@
 		<link mapfrom="GenericMigrationBase" mapto="MigrationBase">default.abstract.ORM/GenericMigrationBase</link>
 		<link mapfrom="GenericMigrationManager" mapto="MigrationManager">default.implement.ORM/GenericMigrationManager</link>
 	</MigrationManager>
-	<Memcached>
-		<link mapfrom="GenericMemcached" mapto="Memcached">default.implement.KVS/GenericMemcached.class.php</link>
-	</Memcached>
 	<Crypt>
 		<link mapfrom="Cipher" mapto="Crypt">default.implement.Cipher/Cipher</link>
 	</Crypt>
@@ -140,10 +154,18 @@
 		<package>HtmlTemplate</package>
 		<link>default.implement.MVC/HtmlViewAssignor</link>
 	</HtmlViewAssignor>
+	<AppReceiptVerifier>
+		<link>default.GPD/GPDFacade.php</link>
+		<link mapfrom="GenericAppReceiptVerifier" mapto="AppReceiptVerifier">default.implement.Smartphone/GenericAppReceiptVerifier</link>
+	</AppReceiptVerifier>
 	<PushNotification>
-		<link>default.AWSSDK/aws.phar</link>
+		<link>default.AWSSDK/autoload.php</link>
 		<link mapfrom="GenericAWSNotification" mapto="PushNotification">default.implement.AWS/GenericAWSNotification</link>
 	</PushNotification>
+	<WebStorage>
+		<link>default.AWSSDK/autoload.php</link>
+		<link mapfrom="GenericAWSS3" mapto="WebStorage">default.implement.AWS/GenericAWSS3</link>
+	</WebStorage>
 	<Image>
 		<pattern><![CDATA[^Image[a-zA-Z]*(Info|Util)]]></pattern>
 		<link>default.implement.Image/Image</link>

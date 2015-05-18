@@ -203,6 +203,12 @@ class Auth
 		}
 	}
 
+	public static function init($argDSN=NULL){
+		if(FALSE === self::$_initialized){
+			self::_init($argDSN);
+		}
+	}
+
 	/**
 	 */
 	public static function getEncryptedAuthIdentifier($argIdentifier=NULL){
@@ -216,6 +222,9 @@ class Auth
 	/**
 	 */
 	public static function getDecryptedAuthIdentifier($argIdentifier=NULL){
+		if(FALSE === self::$_initialized){
+			self::_init($argDSN);
+		}
 		if(NULL === $argIdentifier){
 			$argIdentifier = Session::sessionID();
 		}
@@ -233,7 +242,7 @@ class Auth
 		Session::start();
 		$sessionIdentifier = Session::sessionID();
 		debug( self::$_sessionCryptKey . ':' . self::$_sessionCryptIV);
-		debug("session identifier".$sessionIdentifier);
+		debug("session identifier=".$sessionIdentifier);
 		$userID = self::getDecryptedAuthIdentifier($sessionIdentifier);
 		debug("decrypted userID=".$userID);
 		if(strlen($userID) > 0){
@@ -259,6 +268,7 @@ class Auth
 			self::_init($argDSN);
 		}
 		if(FALSE === self::getCertifiedUser()){
+			Session::clear();
 			return FALSE;
 		}
 		return TRUE;
@@ -390,7 +400,7 @@ class Auth
 	 * 登録する
 	 * @param string DB接続情報
 	 */
-	public static function registration($argID = NULL, $argPass = NULL, $argDSN = NULL){
+	public static function registration($argID = NULL, $argPass = NULL, $argDate = NULL, $argDSN = NULL){
 		if(FALSE === self::$_initialized){
 			self::_init($argDSN);
 		}
@@ -418,14 +428,16 @@ class Auth
 		}
 		$id = self::_resolveEncrypted($id, self::$authIDEncrypted);
 		$pass = self::_resolveEncrypted($pass, self::$authPassEncrypted);
-		$gmtDate = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
-		$query = '`' . self::$authIDField . '` = :' . self::$authIDField . ' AND `' . self::$authPassField . '` = ' . self::$authPassField . ' ';
+		if(NULL === $argDate){
+			$argDate = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
+		}
+		$query = '`' . self::$authIDField . '` = :' . self::$authIDField . ' AND `' . self::$authPassField . '` = :' . self::$authPassField . ' ';
 		$binds = array(self::$authIDField => $id, self::$authPassField => $pass);
 		$User = ORMapper::getModel(self::$_DBO, self::$authTable, $query, $binds);
 		$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', self::$authIDField)))}($id);
 		$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', self::$authPassField)))}($pass);
-		$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', self::$authCreatedField)))}($gmtDate);
-		$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', self::$authModifiedField)))}($gmtDate);
+		$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', self::$authCreatedField)))}($argDate);
+		$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', self::$authModifiedField)))}($argDate);
 		if(TRUE === $User->save()){
 			// ユーザーの登録は完了とみなし、コミットを行う！
 			self::$_DBO->commit();

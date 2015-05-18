@@ -1,8 +1,12 @@
 RewriteEngine On
 
 # PHP側でRewriteRuleを参照出来るようにする
-SetEnv RewriteRule '([^\+]*)?\.(.*)$ index.php?_c_=web/$1&_o_=$2'
-SetEnv ReverseRewriteRule '\?_c_\=web\/([^+]*)?\&_o_\=(.*) ./$1.$2'
+SetEnv RewriteRule '([^\+]*)?\.(.*)$ index.php?_c_=$1&_o_=$2'
+SetEnv ReverseRewriteRule '\?_c_\=([^+]*)?\&_o_\=(.*) ./$1.$2'
+
+RewriteCond %{REQUEST_URI} $
+RewriteCond %{REQUEST_URI} $
+RewriteRule assets\/(.*) static/assets/$1 [QSA,L]
 
 # All files with .something are skipped
 RewriteCond %{REQUEST_URI} \..+$
@@ -10,13 +14,12 @@ RewriteCond %{REQUEST_URI} !$
 RewriteCond %{REQUEST_URI} !\.html$
 RewriteCond %{REQUEST_URI} !\.xml$
 RewriteCond %{REQUEST_URI} !\.json$
-RewriteRule .* - [L]
 
 # リライト
 # URL省略時のIndexFlowへのRewrite
-RewriteRule ^\/$ index.php?_c_=web/Index&_o_=html [QSA,L]
+RewriteRule ^\/$ index.php?_c_=Index&_o_=html [QSA,L]
 # FlowへのRewrite
-RewriteRule ([^\+]*)?\.(.*)$ index.php?_c_=web/$1&_o_=$2 [QSA,L]
+RewriteRule ([^\+]*)?\.(.*)$ index.php?_c_=$1&_o_=$2 [QSA,L]
 
 php_flag mbstring.encoding_translation off
 php_value mbstring.http_input pass

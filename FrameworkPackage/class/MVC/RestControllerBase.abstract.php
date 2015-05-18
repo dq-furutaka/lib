@@ -10,6 +10,9 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 	public $restResourceCreateDateKeyName = '';
 	public $restResourceModifyDateKeyName = '';
 	public $restResourceAvailableKeyName = '';
+	public $restResourceUserTableName = NULL;
+	public $restResourceRelaySuffix = '';
+	public $restResourceRelayPrefix = '';
 	public $AuthDevice = NULL;
 	public $AuthUser = NULL;
 	public $authUserID = NULL;
@@ -17,6 +20,14 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 	public $authUserQuery = NULL;
 	public $deepRESTMode = TRUE;
 	public $rootREST = TRUE;
+	public $responceData = FALSE;
+	public static $nowGMT = NULL;
+
+	public function __construct(){
+		if(NULL === self::$nowGMT){
+			self::$nowGMT = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
+		}
+	}
 
 	protected function _init(){
 		if(FALSE === $this->_initialized){
@@ -32,6 +43,15 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			if(class_exists('Configure') && NULL !== Configure::constant('REST_RESOURCE_AVAILABLE_KEY_NAME')){
 				$this->restResourceAvailableKeyName = Configure::REST_RESOURCE_AVAILABLE_KEY_NAME;
 			}
+			if(class_exists('Configure') && NULL !== Configure::constant('REST_UIDAUTH_USER_TBL_NAME')){
+				$this->restResourceUserTableName = Configure::REST_UIDAUTH_USER_TBL_NAME;
+			}
+			if(class_exists('Configure') && NULL !== Configure::constant('REST_RESOURCE_RELAY_SUFFIX')){
+				$this->restResourceRelaySuffix = Configure::REST_RESOURCE_RELAY_SUFFIX;
+			}
+			if(class_exists('Configure') && NULL !== Configure::constant('REST_RESOURCE_RELAY_PREFIX')){
+				$this->restResourceRelayPrefix = Configure::REST_RESOURCE_RELAY_PREFIX;
+			}
 			elseif(defined('PROJECT_NAME') && strlen(PROJECT_NAME) > 0 && class_exists(PROJECT_NAME . 'Configure')){
 				$ProjectConfigure = PROJECT_NAME . 'Configure';
 				if(NULL !== $ProjectConfigure::constant('REST_RESOURCE_OWNER_PKEY_NAME')){
@@ -46,9 +66,19 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				if(NULL !== $ProjectConfigure::constant('REST_RESOURCE_AVAILABLE_KEY_NAME')){
 					$this->restResourceAvailableKeyName = $ProjectConfigure::REST_RESOURCE_AVAILABLE_KEY_NAME;
 				}
+				if(NULL !== $ProjectConfigure::constant('REST_UIDAUTH_USER_TBL_NAME')){
+					$this->restResourceUserTableName = $ProjectConfigure::REST_UIDAUTH_USER_TBL_NAME;
+				}
+				if(NULL !== $ProjectConfigure::constant('REST_RESOURCE_RELAY_SUFFIX')){
+					$this->restResourceRelaySuffix = $ProjectConfigure::REST_RESOURCE_RELAY_SUFFIX;
+				}
+				if(NULL !== $ProjectConfigure::constant('REST_RESOURCE_RELAY_PREFIX')){
+					$this->restResourceRelayPrefix = $ProjectConfigure::REST_RESOURCE_RELAY_PREFIX;
+				}
 			}
-			debug('restResourceCreateDateKeyName='.$this->restResourceCreateDateKeyName);
-			debug('restResourceModifyDateKeyName='.$this->restResourceModifyDateKeyName);
+			if(NULL === self::$nowGMT){
+				self::$nowGMT = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
+			}
 			$this->_initialized = TRUE;
 		}
 	}
@@ -109,6 +139,10 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 		}
 	}
 
+	public function convertArrayFromModel($ArgModel, $argFields=NULL){
+		return $this->_convertArrayFromModel($ArgModel, $argFields);
+	}
+
 	protected function _convertArrayFromModel($ArgModel, $argFields=NULL){
 		if(is_object($ArgModel)){
 			$arrayModel = array();
@@ -129,14 +163,13 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 		}
 		return FALSE;
 	}
-
-	public function getRequestParams(){
+	public static function resolveRequestParams(){
 		$requestParams = array();
 		debug('method='.$_SERVER['REQUEST_METHOD']);
 		if('PUT' === $_SERVER['REQUEST_METHOD'] || 'DELETE' === $_SERVER['REQUEST_METHOD']){
 			static $putParam = NULL;
 			if(NULL === $putParam){
-				parse_str(file_get_contents('php://input', FALSE , NULL, -1 , $_SERVER['CONTENT_LENGTH'] ), $putParam);
+				$putParam = parse_phpinput_str();
 			}
 			$requestParams = $putParam;
 		}
@@ -153,6 +186,10 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 		return $requestParams;
 	}
 
+	public function getRequestParams(){
+		return self::resolveRequestParams();
+	}
+
 	/**
 	 * フレームワーク標準のAuth機能を利用した認証と登録を行って、RESTする(スマフォAPI向け)
 	 * @return array 配列構造のリソースデータ
@@ -166,6 +203,8 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 		$UserModelCreatedFieldName = NULL;
 		$UserModelModifiedFieldName = NULL;
 		$deviceTypeFieldName = NULL;
+		$deviceTokenFieldName = NULL;
+		$deviceRegistrationIDFieldName = NULL;
 		if(class_exists('Configure') && NULL !== Configure::constant('REST_UIDAUTH_USER_TBL_NAME')){
 			$userModelName = Configure::REST_UIDAUTH_USER_TBL_NAME;
 		}
@@ -177,6 +216,15 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 		}
 		if(class_exists('Configure') && NULL !== Configure::constant('REST_UIDAUTH_DEVICE_TYPE_FIELD_NAME')){
 			$deviceTypeFieldName = Configure::REST_UIDAUTH_DEVICE_TYPE_FIELD_NAME;
+		}
+		if(class_exists('Configure') && NULL !== Configure::constant('REST_UIDAUTH_DEVICE_TYPE_FIELD_NAME')){
+			$deviceTypeFieldName = Configure::REST_UIDAUTH_DEVICE_TYPE_FIELD_NAME;
+		}
+		if(class_exists('Configure') && NULL !== Configure::constant('REST_UIDAUTH_DEVICE_TOKEN_FIELD_NAME')){
+			$deviceTokenFieldName = Configure::REST_UIDAUTH_DEVICE_TOKEN_FIELD_NAME;
+		}
+		if(class_exists('Configure') && NULL !== Configure::constant('REST_UIDAUTH_DEVICE_REGISTRATIONID_FIELD_NAME')){
+			$deviceRegistrationIDFieldName = Configure::REST_UIDAUTH_DEVICE_REGISTRATIONID_FIELD_NAME;
 		}
 		if(defined('PROJECT_NAME') && strlen(PROJECT_NAME) > 0 && class_exists(PROJECT_NAME . 'Configure')){
 			$ProjectConfigure = PROJECT_NAME . 'Configure';
@@ -192,9 +240,14 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			if(NULL !== $ProjectConfigure::constant('REST_UIDAUTH_DEVICE_TYPE_FIELD_NAME')){
 				$deviceTypeFieldName = $ProjectConfigure::REST_UIDAUTH_DEVICE_TYPE_FIELD_NAME;
 			}
+			if(NULL !== $ProjectConfigure::constant('REST_UIDAUTH_DEVICE_TOKEN_FIELD_NAME')){
+				$deviceTokenFieldName = $ProjectConfigure::REST_UIDAUTH_DEVICE_TOKEN_FIELD_NAME;
+			}
+			if(NULL !== $ProjectConfigure::constant('REST_UIDAUTH_DEVICE_REGISTRATIONID_FIELD_NAME')){
+				$deviceRegistrationIDFieldName = $ProjectConfigure::REST_UIDAUTH_DEVICE_REGISTRATIONID_FIELD_NAME;
+			}
 		}
 		try{
-			$gmtDate = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
 			$DBO = self::_getDBO();
 			// UIDAuth
 			$Device = Auth::getCertifiedUser();
@@ -207,7 +260,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 					// UIDエラー！ 認証エラー
 					throw new RESTException(__CLASS__.PATH_SEPARATOR.__METHOD__.PATH_SEPARATOR.__LINE__, 401);
 				}
-				$Device = Auth::registration($deviceID, $deviceID);
+				$Device = Auth::registration($deviceID, $deviceID, self::$nowGMT);
 				// 強制認証で証明を得る
 				if(TRUE !== Auth::certify($Device->{Auth::$authIDField}, $Device->{Auth::$authPassField}, NULL, TRUE)){
 					// 認証NG(401)
@@ -225,10 +278,10 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						// userテーブルとdeviceテーブルのテーブル名が違うので、userテーブルの保存を行う
 						$User = self::_getModel($userModelName);
 						if(NULL !== $UserModelCreatedFieldName && in_array($UserModelCreatedFieldName, $User->getFieldKeys())){
-							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}($gmtDate);
+							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}(self::$nowGMT);
 						}
 						if(NULL !== $UserModelModifiedFieldName && in_array($UserModelModifiedFieldName, $User->getFieldKeys())){
-							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}($gmtDate);
+							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}(self::$nowGMT);
 						}
 						$User->save();
 						// deviceテーブルにユーザーIDのセット(強制)
@@ -240,13 +293,12 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						$User = self::_getModel($userModelName, $Device->{$ownerIDField});
 						if(!(0 < (int)$User->pkey)){
 							// デバイスの持ち主が変わった可能性
-							$gmtDate = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
 							// userテーブルとdeviceテーブルのテーブル名が違うので、userテーブルの保存を行う
 							if(NULL !== $UserModelCreatedFieldName && in_array($UserModelCreatedFieldName, $User->getFieldKeys())){
-								$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}($gmtDate);
+								$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}(self::$nowGMT);
 							}
 							if(NULL !== $UserModelModifiedFieldName && in_array($UserModelModifiedFieldName, $User->getFieldKeys())){
-								$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}($gmtDate);
+								$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}(self::$nowGMT);
 							}
 							$User->save();
 							// deviceテーブルにユーザーIDのセット(強制)
@@ -260,13 +312,60 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 					$User = $Device;
 				}
 				// device情報の更新
+				// デバイズのtype設定があるなら保存する
 				if(NULL !== $deviceTypeFieldName && in_array($deviceTypeFieldName, $Device->getFieldKeys()) && isset($this->deviceType) && 0 < strlen($this->deviceType)){
-					$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceTypeFieldName)))}($this->deviceType);
-					$deviceModified = TRUE;
+					if($Device->{$deviceTypeFieldName} != $this->deviceType){
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceTypeFieldName)))}($this->deviceType);
+						$deviceModified = TRUE;
+					}
+				}
+				$request = $this->getRequestParams();
+				// デバイズトークン(iOS)設定があるなら保存する
+				if(NULL !== $deviceTokenFieldName && in_array($deviceTokenFieldName, $Device->getFieldKeys()) && isset($request[$deviceTokenFieldName]) && 0 < strlen($request[$deviceTokenFieldName])){
+					// 上書きチェック
+					if($Device->{$deviceTokenFieldName} != $request[$deviceTokenFieldName]){
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceTokenFieldName)))}($request[$deviceTokenFieldName]);
+						$deviceModified = TRUE;
+					}
+				}
+				// SANDBOX端末設定(iOS)があるなら保存する
+				// XXX フィード名を定数化するかどうか
+				if(in_array('sandbox_enabled', $Device->getFieldKeys()) && isset($request['sandbox_enabled']) && 0 < strlen($request['sandbox_enabled'])){
+					// 上書きチェック
+					if($Device->sandbox_enabled != $request['sandbox_enabled']){
+						$Device->setSandboxEnabled($request['sandbox_enabled']);
+						$deviceModified = TRUE;
+					}
+				}
+				// アプリバージョンがあるなら保存する
+				// XXX フィード名を定数化する！？
+				if(in_array('version_code', $Device->getFieldKeys()) && isset(Core::$appVersion) && NULL !== Core::$appVersion && 0 < strlen(Core::$appVersion)){
+					// 上書きチェック
+					if($Device->version_code != Core::$appVersion){
+						$Device->setVersionCode(Core::$appVersion);
+						$deviceModified = TRUE;
+					}
+				}
+				// アプリ表示バージョンがあるなら保存する
+				// XXX フィード名を定数化する！？
+				if(in_array('version_name', $Device->getFieldKeys()) && isset(Core::$appDispayVersion) && NULL !== Core::$appDispayVersion && 0 < strlen(Core::$appDispayVersion)){
+					// 上書きチェック
+					if($Device->version_name != Core::$appDispayVersion){
+						$Device->setVersionName(Core::$appDispayVersion);
+						$deviceModified = TRUE;
+					}
+				}
+				// レジストレーションID(Android)設定があるなら保存する
+				if(NULL !== $deviceRegistrationIDFieldName && in_array($deviceRegistrationIDFieldName, $Device->getFieldKeys()) && isset($request[$deviceRegistrationIDFieldName]) && 0 < strlen($request[$deviceRegistrationIDFieldName])){
+					// 上書きチェック
+					if($Device->{$deviceRegistrationIDFieldName} != $request[$deviceRegistrationIDFieldName]){
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceRegistrationIDFieldName)))}($request[$deviceRegistrationIDFieldName]);
+						$deviceModified = TRUE;
+					}
 				}
 				if(TRUE === $deviceModified){
 					if(in_array(Auth::$authModifiedField, $Device->getFieldKeys())){
-						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', Auth::$authModifiedField)))}($gmtDate);
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', Auth::$authModifiedField)))}(self::$nowGMT);
 					}
 					$Device->save();
 				}
@@ -280,55 +379,101 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				if(isset($Device->{$this->authUserIDFieldName})){
 					$ownerIDField = $this->authUserIDFieldName;
 				}
+				// user情報の更新
+				$userModified = FALSE;
+				$deviceModified = FALSE;
 				debug('is owner?'.$Device->{$ownerIDField});
 				if(!(0 < strlen($Device->{$ownerIDField}) && '0' != $Device->{$ownerIDField})){
 					// user情報の更新
 					// userテーブルとdeviceテーブルのテーブル名が違うので、userテーブルの保存を行う
 					$User = self::_getModel($userModelName);
 					if(NULL !== $UserModelCreatedFieldName && in_array($UserModelCreatedFieldName, $User->getFieldKeys())){
-						$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}($gmtDate);
+						$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}(self::$nowGMT);
+						$userModified = TRUE;
 					}
-					if(NULL !== $UserModelModifiedFieldName && in_array($UserModelModifiedFieldName, $User->getFieldKeys())){
-						$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}($gmtDate);
-					}
-					$User->save();
 					// deviceテーブルにユーザーIDのセット(強制)
 					$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $ownerIDField)))}($User->pkey);
 					if(NULL !== $deviceTypeFieldName && in_array($deviceTypeFieldName, $Device->getFieldKeys()) && isset($this->deviceType) && 0 < strlen($this->deviceType)){
 						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceTypeFieldName)))}($this->deviceType);
+						$deviceModified = TRUE;
 					}
-					if(in_array(Auth::$authModifiedField, $Device->getFieldKeys())){
-						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', Auth::$authModifiedField)))}($gmtDate);
-					}
-					$Device->save();
-					// 一旦コミット
-					$DBO->commit();
 				}
 				else {
 					$User = self::_getModel($userModelName, $Device->{$ownerIDField});
 					if(!(0 < (int)$User->pkey)){
 						// デバイスの持ち主が変わった可能性
-						$gmtDate = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
 						// userテーブルとdeviceテーブルのテーブル名が違うので、userテーブルの保存を行う
 						if(NULL !== $UserModelCreatedFieldName && in_array($UserModelCreatedFieldName, $User->getFieldKeys())){
-							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}($gmtDate);
+							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelCreatedFieldName)))}(self::$nowGMT);
+							$userModified = TRUE;
 						}
-						if(NULL !== $UserModelModifiedFieldName && in_array($UserModelModifiedFieldName, $User->getFieldKeys())){
-							$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}($gmtDate);
-						}
-						$User->save();
 						// deviceテーブルにユーザーIDのセット(強制)
 						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $ownerIDField)))}($User->pkey);
 						if(NULL !== $deviceTypeFieldName && in_array($deviceTypeFieldName, $Device->getFieldKeys()) && isset($this->deviceType) && 0 < strlen($this->deviceType)){
 							$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceTypeFieldName)))}($this->deviceType);
+							$deviceModified = TRUE;
 						}
-						if(in_array(Auth::$authModifiedField, $Device->getFieldKeys())){
-							$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', Auth::$authModifiedField)))}($gmtDate);
-						}
-						$Device->save();
-						// 一旦コミット
-						$DBO->commit();
 					}
+				}
+				$request = $this->getRequestParams();
+				// デバイズトークン(iOS)設定があるなら保存する
+				if(NULL !== $deviceTokenFieldName && in_array($deviceTokenFieldName, $Device->getFieldKeys()) && isset($request[$deviceTokenFieldName]) && 0 < strlen($request[$deviceTokenFieldName])){
+					// 上書きチェック
+					if($Device->{$deviceTokenFieldName} != $request[$deviceTokenFieldName]){
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceTokenFieldName)))}($request[$deviceTokenFieldName]);
+						$deviceModified = TRUE;
+					}
+				}
+				// SANDBOX端末設定(iOS)があるなら保存する
+				if(in_array('sandbox_enabled', $Device->getFieldKeys()) && isset($request['sandbox_enabled']) && 0 < strlen($request['sandbox_enabled'])){
+					// 上書きチェック
+					if($Device->sandbox_enabled != $request['sandbox_enabled']){
+						$Device->setSandboxEnabled($request['sandbox_enabled']);
+						$deviceModified = TRUE;
+					}
+				}
+				// アプリバージョンがあるなら保存する
+				// XXX フィード名を定数化する！？
+				if(in_array('version_code', $Device->getFieldKeys()) && isset(Core::$appVersion) && NULL !== Core::$appVersion && 0 < strlen(Core::$appVersion)){
+					// 上書きチェック
+					if($Device->version_code != Core::$appVersion){
+						$Device->setVersionCode(Core::$appVersion);
+						$deviceModified = TRUE;
+					}
+				}
+				// アプリ表示バージョンがあるなら保存する
+				// XXX フィード名を定数化する！？
+				if(in_array('version_name', $Device->getFieldKeys()) && isset(Core::$appDispayVersion) && NULL !== Core::$appDispayVersion && 0 < strlen(Core::$appDispayVersion)){
+					// 上書きチェック
+					if($Device->version_name != Core::$appDispayVersion){
+						$Device->setVersionName(Core::$appDispayVersion);
+						$deviceModified = TRUE;
+					}
+				}
+				// レジストレーションID(Android)設定があるなら保存する
+				if(NULL !== $deviceRegistrationIDFieldName && in_array($deviceRegistrationIDFieldName, $Device->getFieldKeys()) && isset($request[$deviceRegistrationIDFieldName]) && 0 < strlen($request[$deviceRegistrationIDFieldName])){
+					// 上書きチェック
+					if($Device->{$deviceRegistrationIDFieldName} != $request[$deviceRegistrationIDFieldName]){
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $deviceRegistrationIDFieldName)))}($request[$deviceRegistrationIDFieldName]);
+						$deviceModified = TRUE;
+					}
+				}
+				if(TRUE === $userModified){
+					if(NULL !== $UserModelModifiedFieldName && in_array($UserModelModifiedFieldName, $User->getFieldKeys())){
+						$User->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $UserModelModifiedFieldName)))}(self::$nowGMT);
+						$userModified = TRUE;
+					}
+					$User->save();
+				}
+				if(TRUE === $deviceModified){
+					if(in_array(Auth::$authModifiedField, $Device->getFieldKeys())){
+						$Device->{'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', Auth::$authModifiedField)))}(self::$nowGMT);
+					}
+					$Device->save();
+				}
+				if(TRUE === $deviceModified || TRUE === $userModified){
+					// 一旦コミット
+					$DBO->commit();
 				}
 			}
 			else{
@@ -464,7 +609,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			}
 			$this->restResource = $resource;
 
-			// Prepend処理
+			// REST全体のPrepend処理
 			if(TRUE === $this->rootREST && FALSE === $prepend){
 				$prepend = TRUE;
 				// Filterがあったらフィルター処理をする
@@ -480,10 +625,28 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 
 			$classHint = str_replace(' ', '', ucwords(str_replace(' ', '', $this->restResourceModel)));
 			debug('$classHint='.$classHint);
+
+			// 指定リソースの絶対的なPrepend
+			$filerName = $classHint . 'PrependFilter';
+			debug('resoruce='.$filerName);
+			if(FALSE !== MVCCore::loadMVCFilter($filerName, TRUE)){
+				$filterClass = MVCCore::loadMVCFilter($filerName);
+				$Filter = new $filterClass();
+				$Filter->REST = $this;
+				// リクエストメソッドで分岐する
+				if('POST' === $this->requestMethod || 'PUT' === $this->requestMethod){
+					$Filter->{strtolower($this->requestMethod)}($argRequestParams);
+				}
+				else {
+					$Filter->{strtolower($this->requestMethod)}();
+				}
+			}
+
 			if(FALSE !== MVCCore::loadMVCModule($classHint, TRUE)){
 				debug('RestClassLoaded');
 				// オーバーライドされたModelへのリソース操作クラスが在る場合は、それをnewして実行する
 				$className = MVCCore::loadMVCModule($classHint);
+				debug('RestClassLoaded='.$className);
 				$RestController = new $className();
 				// 自分自身の持っているパブリックパラメータをブリッジ先のRestControllerに引き渡す
 				$RestController->controlerClassName = $this->restResourceModel;
@@ -500,9 +663,14 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				$RestController->restResource = $this->restResource;
 				$RestController->restResourceModel = $this->restResourceModel;
 				$RestController->restResourceListed = $this->restResourceListed;
+				$RestController->restResourceUserTableName = $this->restResourceUserTableName;
 				$RestController->restResourceCreateDateKeyName = $this->restResourceCreateDateKeyName;
 				$RestController->restResourceModifyDateKeyName = $this->restResourceModifyDateKeyName;
+				$RestController->restResourceAvailableKeyName = $this->restResourceAvailableKeyName;
+				$RestController->restResourceRelaySuffix = $this->restResourceRelaySuffix;
+				$RestController->restResourceRelayPrefix = $this->restResourceRelayPrefix;
 				$RestController->AuthUser = $this->AuthUser;
+				$RestController->AuthDevice = $this->AuthDevice;
 				$RestController->authUserID = $this->authUserID;
 				$RestController->authUserIDFieldName = $this->authUserIDFieldName;
 				$RestController->authUserQuery = $this->authUserQuery;
@@ -513,6 +681,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				else {
 					$res = $RestController->{strtolower($this->requestMethod)}();
 				}
+				$this->responceData = &$res;
 				// 結果のパラメータを受け取り直す
 				$this->httpStatus = $RestController->httpStatus;
 				$this->outputType = $RestController->outputType;
@@ -527,9 +696,14 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				$this->restResource = $RestController->restResource;
 				$this->restResourceModel = $RestController->restResourceModel;
 				$this->restResourceListed = $RestController->restResourceListed;
+				$this->restResourceUserTableName = $RestController->restResourceUserTableName;
 				$this->restResourceCreateDateKeyName = $RestController->restResourceCreateDateKeyName;
 				$this->restResourceModifyDateKeyName = $RestController->restResourceModifyDateKeyName;
+				$this->restResourceAvailableKeyName = $RestController->restResourceAvailableKeyName;
+				$this->restResourceRelaySuffix = $RestController->restResourceRelaySuffix;
+				$this->restResourceRelayPrefix = $RestController->restResourceRelayPrefix;
 				$this->AuthUser = $RestController->AuthUser;
+				$this->AuthDevice = $RestController->AuthDevice;
 				$this->authUserID = $RestController->authUserID;
 				$this->authUserIDFieldName = $RestController->authUserIDFieldName;
 				$this->authUserQuery = $RestController->authUserQuery;
@@ -537,9 +711,26 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			else {
 				// リクエストメソッドで分岐する
 				$res = $this->{strtolower($this->requestMethod)}();
+				$this->responceData = &$res;
 			}
 
-			// Append処理
+			// 指定リソースの絶対的なAppend
+			$filerName = $classHint . 'AppendFilter';
+			debug('resoruce='.$filerName);
+			if(FALSE !== MVCCore::loadMVCFilter($filerName, TRUE)){
+				$filterClass = MVCCore::loadMVCFilter($filerName);
+				$Filter = new $filterClass();
+				$Filter->REST = $this;
+				// リクエストメソッドで分岐する
+				if('POST' === $this->requestMethod || 'PUT' === $this->requestMethod){
+					$Filter->{strtolower($this->requestMethod)}($argRequestParams);
+				}
+				else {
+					$Filter->{strtolower($this->requestMethod)}();
+				}
+			}
+
+			// REST全体のAppend処理
 			if(TRUE === $this->rootREST && FALSE === $append){
 				$append = TRUE;
 				// Filterがあったらフィルター処理をする
@@ -628,7 +819,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 								$basehtml .= '</tr>'.PHP_EOL;
 							}
 							$basehtml .= '</table>'.PHP_EOL;
-							if(isset($requestParams['LIMIT']) && is_numeric($requestParams['LIMIT']) && (int)$requestParams['LIMIT'] > 0 && isset($requestParams['OFFSET']) && is_numeric($requestParams['OFFSET']) && isset($requestParams['total']) && is_numeric($requestParams['total']) && (int)$requestParams['total'] > 0){
+							if(TRUE === $this->rootREST && isset($requestParams['LIMIT']) && is_numeric($requestParams['LIMIT']) && (int)$requestParams['LIMIT'] > 0 && isset($requestParams['OFFSET']) && is_numeric($requestParams['OFFSET']) && isset($requestParams['total']) && is_numeric($requestParams['total']) && (int)$requestParams['total'] > 0){
 								// ページング
 								$nowPage = (floor((int)$requestParams['OFFSET']/(int)$requestParams['LIMIT'])+1);
 								if(1 < floor((int)$requestParams['total']/(int)$requestParams['LIMIT'])+1){
@@ -708,6 +899,21 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			header('Records: ' . $res['count']);
 			$res = TRUE;
 		}
+		else if(TRUE === $this->rootREST && 'GET' === $this->requestMethod){
+			// GETの時はHEADリクエストの結果を包括する為の処理
+			try{
+				$headRes = $this->head();
+				header('Head: ' . json_encode($headRes['describes']));
+				header('Rules: ' . json_encode($headRes['rules']));
+				header('Records: ' . $headRes['count']);
+			}
+			catch (Exception $Exception){
+				// 何もしない
+			}
+		}
+
+		// MVCCoreのアクセス時間をRESTが持っている現在時刻で差し替える
+		MVCCore::$accessed = self::$nowGMT;
 
 		// 正常終了(のハズ！)
 		return $res;
@@ -745,7 +951,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				$ids = NULL;
 				$listed = TRUE;
 				// pkey指定があるかどうか
-				if(isset($hints[$hintIdx])){
+				if(isset($hints[$hintIdx]) && strlen($hints[$hintIdx]) > 0){
 					$ids = array($hints[$hintIdx]);
 					if(',' === $hints[$hintIdx]){
 						$ids = explode(',', $hints[$hintIdx]);
@@ -790,12 +996,6 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			}
 			return $resources;
 		}
-		if(TRUE === $this->restResource['me']){
-			// 認証ユーザーのリソース指定
-			// bind使うので自力で組み立てる
-			$baseQuery = ' `' . $this->authUserIDFieldName . '` = :' . $this->authUserIDFieldName . ' ';
-			$baseBinds = array($this->authUserIDFieldName => $this->authUserID);
-		}
 		try{
 			if(TRUE === $this->restResource['me'] && NULL !== $this->AuthUser && is_object($this->AuthUser) && strtolower($this->restResourceModel) == strtolower($this->AuthUser->tableName)){
 				// 自分自身のAuthモデルに対しての処理とする
@@ -804,11 +1004,25 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				// REQUESTされているパラメータは条件分に利用する
 				for($fieldIdx = 0; $fieldIdx < count($fields); $fieldIdx++){
 					// DEEP-REST用のテーブルとフィールドの一覧をストックしておく
-					if(TRUE === $this->deepRESTMode && (strlen($fields[$fieldIdx]) -3) === strpos($fields[$fieldIdx], '_id') && $this->authUserIDFieldName != $fields[$fieldIdx]){
-						$deepBaseResource = substr($fields[$fieldIdx], 0, -3);
-						debug('deep??'.$deepBaseResource.'&'.$this->authUserIDFieldName.'&'.$fields[$fieldIdx].'&'.(strlen($fields[$fieldIdx]) -3).'&'.strpos($fields[$fieldIdx], '_id'));
-						$isDeepModel = TRUE;
-						$deepModels[$fields[$fieldIdx]] = $deepBaseResource;
+					if(TRUE === $this->deepRESTMode && TRUE === (TRUE === $this->restResource['me'] || $this->authUserIDFieldName != $fields[$fieldIdx])){
+						$deepBaseResource = NULL;
+						if(0 < strlen($this->restResourceRelayPrefix) && 0 === strpos($fields[$fieldIdx], $this->restResourceRelayPrefix) && (strlen($this->restResourceRelayPrefix.$fields[$fieldIdx]) -3) === strpos($this->restResourceRelayPrefix.$fields[$fieldIdx], '_id')){
+							$deepBaseResource = substr(substr($fields[$fieldIdx], 0, -3), strlen($this->restResourceRelayPrefix));
+						}
+						else if((strlen($fields[$fieldIdx]) - (3 + strlen($this->restResourceRelaySuffix))) === strpos($fields[$fieldIdx], '_id'.$this->restResourceRelaySuffix)){
+							$deepBaseResource = substr($fields[$fieldIdx], 0, - (3 + strlen($this->restResourceRelaySuffix)));
+						}
+						else if((strlen($fields[$fieldIdx]) -3) === strpos($fields[$fieldIdx], '_id')){
+							$deepBaseResource = substr($fields[$fieldIdx], 0, -3);
+						}
+						if(NULL !== $this->restResourceUserTableName && $this->authUserIDFieldName == $fields[$fieldIdx]){
+							$deepBaseResource = $this->restResourceUserTableName;
+						}
+						if(NULL !== $deepBaseResource && 0 < strlen($deepBaseResource)){
+							debug(__LINE__.'deep??'.$deepBaseResource.'&'.$this->authUserIDFieldName.'&'.$fields[$fieldIdx]);
+							$isDeepModel = TRUE;
+							$deepModels[$fields[$fieldIdx]] = $deepBaseResource;
+						}
 					}
 				}
 				$resources[] = $this->_convertArrayFromModel($Model);
@@ -819,21 +1033,26 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						if(0 < (int)$id && 0 < strlen($id)){
 							// DEEPは有効なIDの値の時だけ
 							$deepResource = $val.'/'.$id;
+							$field = str_replace('_id', '', $key);
+							if($this->authUserIDFieldName == $key){
+								$field = $val;
+							}
 							if(TRUE === $this->restResource['me']  && strtolower($val) != strtolower($this->AuthUser->tableName)){
 								// meリソース参照を継承
 								$deepResource = 'me/'.$deepResource;
 							}
-							debug('deep??'.$deepResource);
+							debug(__LINE__.'deep???'.$deepResource.'&'.$key.'&field='.$field);
 							// deepRESTを実行し、IDの取得をする
 							$DeepREST = new REST();
 							$DeepREST->AuthUser = $this->AuthUser;
+							$DeepREST->AuthDevice = $this->AuthDevice;
 							$DeepREST->authUserID = $this->authUserID;
 							$DeepREST->authUserIDFieldName = $this->authUserIDFieldName;
 							$DeepREST->authUserQuery = $this->authUserQuery;
 							// リスト参照はDEEP-RESTに継承する
 							$DeepREST->restResourceListed = $this->restResourceListed;
 							$DeepREST->rootREST = FALSE;
-							$resources[count($resources)-1][$val] = $DeepREST->execute($deepResource);
+							$resources[count($resources)-1][$field] = $DeepREST->execute($deepResource);
 						}
 					}
 				}
@@ -842,24 +1061,25 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				$requestParams = $this->getRequestParams();
 				$Model = $this->_getModel($this->restResourceModel);
 				$fields = $Model->getFieldKeys();
-				if(TRUE === $this->restResource['me'] && FALSE === in_array($this->authUserIDFieldName, $fields)){
-					debug('reset auth where!');
-					// フィールドが無いなら$baseQueryを再初期化
-					$baseQuery = ' 1=1 ';
-					$baseBinds = NULL;
+				debug($fields);
+				if(TRUE === $this->restResource['me'] && FALSE !== in_array($this->authUserIDFieldName, $fields)){
+					// 認証ユーザーのリソース指定
+					// bind使うので自力で組み立てる
+					$baseQuery = ' `' . $Model->tableName . '`.`' . $this->authUserIDFieldName . '` = :' . $this->authUserIDFieldName . ' ';
+					$baseBinds = array($this->authUserIDFieldName => $this->authUserID);
 				}
-				debug($requestParams);
+				debug(array_keys($requestParams));
 				// REQUESTされているパラメータは条件文に利用する
 				for($fieldIdx = 0; $fieldIdx < count($fields); $fieldIdx++){
 					if(isset($requestParams[$fields[$fieldIdx]])){
 						// GETパラメータでbaseクエリを書き換える
 						if(is_array($requestParams[$fields[$fieldIdx]]) && isset($requestParams[$fields[$fieldIdx]]['mark']) && isset($requestParams[$fields[$fieldIdx]]['value'])){
 							// =以外の条件を指定したい場合の特殊処理
-							$baseQuery .= ' AND `' . $fields[$fieldIdx] . '` ' . $requestParams[$fields[$fieldIdx]]['mark'] . ' :' . $fields[$fieldIdx] . ' ';
+							$baseQuery .= ' AND `' . $Model->tableName . '`.`' . $fields[$fieldIdx] . '` ' . $requestParams[$fields[$fieldIdx]]['mark'] . ' :' . $fields[$fieldIdx] . ' ';
 							$bindValue = $requestParams[$fields[$fieldIdx]]['value'];
 						}
 						else{
-							$baseQuery .= ' AND `' . $fields[$fieldIdx] . '` = :' . $fields[$fieldIdx] . ' ';
+							$baseQuery .= ' AND `' . $Model->tableName . '`.`' . $fields[$fieldIdx] . '` = :' . $fields[$fieldIdx] . ' ';
 							$bindValue = $requestParams[$fields[$fieldIdx]];
 						}
 						if(NULL === $baseBinds){
@@ -868,20 +1088,38 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						$baseBinds[$fields[$fieldIdx]] = $bindValue;
 					}
 					else if(isset($requestParams['LIKE']) && strlen($requestParams['LIKE']) > 0){
-						$baseQuery .= ' OR `' . $fields[$fieldIdx] . '` LIKE \'%'.addslashes($requestParams['LIKE']).'%\' ';
+						$baseQuery .= ' OR `' . $Model->tableName . '`.`' . $fields[$fieldIdx] . '` LIKE \'%'.addslashes($requestParams['LIKE']).'%\' ';
 					}
 					// 有効フラグの自動参照制御
 					if($this->restResourceAvailableKeyName == $fields[$fieldIdx]){
-						$baseQuery .= ' AND `' . $this->restResourceAvailableKeyName . '` = :' . $fields[$fieldIdx] . ' ';
-						$baseBinds[$fields[$fieldIdx]] = 1;
+						$baseQuery .= ' AND `' . $Model->tableName . '`.`' . $this->restResourceAvailableKeyName . '` = :' . $fields[$fieldIdx] . ' ';
+						$baseBinds[$fields[$fieldIdx]] = '1';
 					}
 					// DEEP-REST用のテーブルとフィールドの一覧をストックしておく
-					if(TRUE === $this->deepRESTMode && (strlen($fields[$fieldIdx]) -3) === strpos($fields[$fieldIdx], '_id') && $this->authUserIDFieldName != $fields[$fieldIdx]){
-						$deepBaseResource = substr($fields[$fieldIdx], 0, -3);
-						debug('deep??'.$deepBaseResource.'&'.$this->authUserIDFieldName.'&'.$fields[$fieldIdx].'&'.(strlen($fields[$fieldIdx]) -3).'&'.strpos($fields[$fieldIdx], '_id'));
-						$isDeepModel = TRUE;
-						$deepModels[$fields[$fieldIdx]] = $deepBaseResource;
+					if(TRUE === $this->deepRESTMode && TRUE === (TRUE === $this->restResource['me'] || $this->authUserIDFieldName != $fields[$fieldIdx])){
+						$deepBaseResource = NULL;
+						if(0 < strlen($this->restResourceRelayPrefix) && 0 === strpos($fields[$fieldIdx], $this->restResourceRelayPrefix) && (strlen($this->restResourceRelayPrefix.$fields[$fieldIdx]) -3) === strpos($this->restResourceRelayPrefix.$fields[$fieldIdx], '_id')){
+							$deepBaseResource = substr(substr($fields[$fieldIdx], 0, -3), strlen($this->restResourceRelayPrefix));
+						}
+						else if((strlen($fields[$fieldIdx]) - (3 + strlen($this->restResourceRelaySuffix))) === strpos($fields[$fieldIdx], '_id'.$this->restResourceRelaySuffix)){
+							$deepBaseResource = substr($fields[$fieldIdx], 0, - (3 + strlen($this->restResourceRelaySuffix)));
+						}
+						else if((strlen($fields[$fieldIdx]) -3) === strpos($fields[$fieldIdx], '_id')){
+							$deepBaseResource = substr($fields[$fieldIdx], 0, -3);
+						}
+						if(NULL !== $this->restResourceUserTableName && $this->authUserIDFieldName == $fields[$fieldIdx]){
+							$deepBaseResource = $this->restResourceUserTableName;
+						}
+						if(NULL !== $deepBaseResource && 0 < strlen($deepBaseResource)){
+							debug(__LINE__.'deep??'.$deepBaseResource.'&'.$this->authUserIDFieldName.'&'.$fields[$fieldIdx]);
+							$isDeepModel = TRUE;
+							$deepModels[$fields[$fieldIdx]] = $deepBaseResource;
+						}
 					}
+				}
+				if(TRUE === $this->rootREST && isset($requestParams['QUERY']) && strlen($requestParams['QUERY']) > 0){
+					// XXX SQLインジェクション対策を後でTXに相談！
+					$baseQuery .= ' AND ' . $requestParams['QUERY'] . ' ';
 				}
 				if(FALSE !== strpos($baseQuery, '1=1  OR ')){
 					$baseQuery = str_replace('1=1  OR ', 'WHERE ', $baseQuery);
@@ -890,35 +1128,44 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				if(NULL !== $this->restResource['ids'] && count($this->restResource['ids']) >= 1){
 					// id指定でループする
 					for($IDIdx = 0; $IDIdx < count($this->restResource['ids']); $IDIdx++){
-						$query = $baseQuery . ' AND `' . $Model->pkeyName . '` = :' . $Model->pkeyName . ' ';
+						$query = $baseQuery . ' AND `' . $Model->tableName . '`.`' . $Model->pkeyName . '` = :' . $Model->pkeyName . ' ';
 						$binds = $baseBinds;
 						if(NULL === $binds){
 							$binds = array();
 						}
 						$binds[$Model->pkeyName] = $this->restResource['ids'][$IDIdx];
+						// GROUP句指定があれば付け足す
+						if(TRUE === $this->rootREST && isset($requestParams['GROUP']) && 0 < strlen($requestParams['GROUP'])){
+							$query .= ' GROUP BY ' . $requestParams['GROUP'] . ' ';
+						}
 						// ORDER句指定があれば付け足す
 						if(isset($requestParams['ORDER']) && 0 < strlen($requestParams['ORDER'])){
 							$query .= ' ORDER BY ' . $requestParams['ORDER'] . ' ';
 						}
 						elseif(in_array($this->restResourceModifyDateKeyName, $fields)) {
-							$query .= ' ORDER BY `' . $this->restResourceModifyDateKeyName . '` DESC ';
+							$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $this->restResourceModifyDateKeyName . '` DESC ';
 						}
 						elseif(in_array($this->restResourceCreateDateKeyName, $fields)) {
-							$query .= ' ORDER BY `' . $this->restResourceCreateDateKeyName . '` DESC ';
+							$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $this->restResourceCreateDateKeyName . '` DESC ';
 						}
 						else {
-							$query .= ' ORDER BY `' . $Model->pkeyName . '` DESC ';
+							$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $Model->pkeyName . '` DESC ';
 						}
 						// LIMIT句指定があれば付け足す
-						if(isset($requestParams['LIMIT']) && is_numeric($requestParams['LIMIT']) && 0 < (int)$requestParams['LIMIT']){
-							$query .= ' LIMIT';
-							// OFFSET句指定があれば付け足す
-							if(isset($requestParams['OFFSET']) && is_numeric($requestParams['OFFSET']) && 0 < (int)$requestParams['OFFSET']){
-								$query .= ' ' . $requestParams['OFFSET'] . ',';
+						if(TRUE === $this->rootREST){
+							if(isset($requestParams['LIMIT']) && is_numeric($requestParams['LIMIT']) && 0 < (int)$requestParams['LIMIT']){
+								$query .= ' LIMIT';
+								// OFFSET句指定があれば付け足す
+								if(isset($requestParams['OFFSET']) && is_numeric($requestParams['OFFSET']) && 0 < (int)$requestParams['OFFSET']){
+									$query .= ' ' . $requestParams['OFFSET'] . ',';
+								}
+								$query .= ' ' . $requestParams['LIMIT'] . ' ';
 							}
-							$query .= ' ' . $requestParams['LIMIT'] . ' ';
+							if (isset($requestParams['JOIN'])){
+								$query = array('QUERY' => $query, 'JOIN' => $requestParams['JOIN']);
+							}
 						}
-						debug('load query='.$query);
+						debug('REST '.__LINE__.'load query='.var_export($query, TRUE));
 						// 読み込み
 						$Model->load($query, $binds);
 						if($Model->count > 0){
@@ -928,22 +1175,28 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 								foreach($deepModels as $key => $val){
 									$id = $resources[count($resources)-1][$key];
 									if(0 < (int)$id && 0 < strlen($id)){
+										// DEEPは有効なIDの値の時だけ
 										$deepResource = $val.'/'.$id;
+										$field = str_replace('_id', '', $key);
+										if($this->authUserIDFieldName == $key){
+											$field = $val;
+										}
 										if(TRUE === $this->restResource['me']  && strtolower($val) != strtolower($this->AuthUser->tableName)){
 											// meリソース参照を継承
 											$deepResource = 'me/'.$deepResource;
 										}
-										debug('deep???'.$deepResource);
+										debug(__LINE__.'deep???'.$deepResource.'&'.$key.'&field='.$field);
 										// deepRESTを実行し、IDの取得をする
 										$DeepREST = new REST();
 										$DeepREST->AuthUser = $this->AuthUser;
+										$DeepREST->AuthDevice = $this->AuthDevice;
 										$DeepREST->authUserID = $this->authUserID;
 										$DeepREST->authUserIDFieldName = $this->authUserIDFieldName;
 										$DeepREST->authUserQuery = $this->authUserQuery;
 										// リスト参照はDEEP-RESTに継承する
 										$DeepREST->restResourceListed = $this->restResourceListed;
 										$DeepREST->rootREST = FALSE;
-										$resources[count($resources)-1][$val] = $DeepREST->execute($deepResource);
+										$resources[count($resources)-1][$field] = $DeepREST->execute($deepResource);
 									}
 								}
 							}
@@ -966,32 +1219,42 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				else if(TRUE === $this->restResourceListed){
 					$query = $baseQuery;
 					$binds = $baseBinds;
+					// GROUP句指定があれば付け足す
+					if(TRUE === $this->rootREST && isset($requestParams['GROUP']) && 0 < strlen($requestParams['GROUP'])){
+						$query .= ' GROUP BY ' . $requestParams['GROUP'] . ' ';
+					}
 					// ORDER句指定があれば付け足す
 					if(isset($requestParams['ORDER']) && 0 < strlen($requestParams['ORDER'])){
 						$query .= ' ORDER BY ' . $requestParams['ORDER'] . ' ';
 					}
 					elseif(in_array($this->restResourceModifyDateKeyName, $fields)) {
-						$query .= ' ORDER BY `' . $this->restResourceModifyDateKeyName . '` DESC ';
+						$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $this->restResourceModifyDateKeyName . '` DESC ';
 					}
 					elseif(in_array($this->restResourceCreateDateKeyName, $fields)) {
-						$query .= ' ORDER BY `' . $this->restResourceCreateDateKeyName . '` DESC ';
+						$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $this->restResourceCreateDateKeyName . '` DESC ';
 					}
 					else {
-						$query .= ' ORDER BY `' . $Model->pkeyName . '` DESC ';
+						$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $Model->pkeyName . '` DESC ';
 					}
+
 					// LIMIT句指定があれば付け足す
-					if(isset($requestParams['LIMIT']) && is_numeric($requestParams['LIMIT']) && 0 < (int)$requestParams['LIMIT']){
-						$query .= ' LIMIT';
-						// OFFSET句指定があれば付け足す
-						if(isset($requestParams['OFFSET']) && is_numeric($requestParams['OFFSET']) && 0 < (int)$requestParams['OFFSET']){
-							$query .= ' ' . $requestParams['OFFSET'] . ',';
+					if(TRUE === $this->rootREST){
+						if(isset($requestParams['LIMIT']) && is_numeric($requestParams['LIMIT']) && 0 < (int)$requestParams['LIMIT']){
+							$query .= ' LIMIT';
+							// OFFSET句指定があれば付け足す
+							if(isset($requestParams['OFFSET']) && is_numeric($requestParams['OFFSET']) && 0 < (int)$requestParams['OFFSET']){
+								$query .= ' ' . $requestParams['OFFSET'] . ',';
+							}
+							$query .= ' ' . $requestParams['LIMIT'] . ' ';
 						}
-						$query .= ' ' . $requestParams['LIMIT'] . ' ';
+						if (isset($requestParams['JOIN'])){
+							$query = array('QUERY' => $query, 'JOIN' => $requestParams['JOIN']);
+						}
 					}
 
 					// 読み込み
-					debug($query);
-					debug($binds);
+					debug('REST '.var_export($query, TRUE));
+					debug('REST '.var_export($binds, TRUE));
 					$Model->load($query, $binds);
 					if($Model->count > 0){
 						do {
@@ -1003,25 +1266,30 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 									if(0 < (int)$id && 0 < strlen($id)){
 										// DEEPは有効なIDの値の時だけ
 										$deepResource = $val.'/'.$id;
+										$field = str_replace('_id', '', $key);
+										if($this->authUserIDFieldName == $key){
+											$field = $val;
+										}
 										if(TRUE === $this->restResource['me']  && strtolower($val) != strtolower($this->AuthUser->tableName)){
 											// meリソース参照を継承
 											$deepResource = 'me/'.$deepResource;
 										}
-										debug('deep??'.$deepResource);
+										debug(__LINE__.'deep???'.$deepResource.'&'.$key.'&field='.$field);
 										// deepRESTを実行し、IDの取得をする
 										$DeepREST = new REST();
 										$DeepREST->AuthUser = $this->AuthUser;
+										$DeepREST->AuthDevice = $this->AuthDevice;
 										$DeepREST->authUserID = $this->authUserID;
 										$DeepREST->authUserIDFieldName = $this->authUserIDFieldName;
 										$DeepREST->authUserQuery = $this->authUserQuery;
 										// リスト参照はDEEP-RESTに継承する
 										$DeepREST->rootREST = FALSE;
 										$DeepREST->restResourceListed = $this->restResourceListed;
-										$resources[count($resources)-1][$val] = $DeepREST->execute($deepResource);
+										$resources[count($resources)-1][$field] = $DeepREST->execute($deepResource);
 									}
 								}
 							}
-						} while (false !== $Model->next());
+						} while (FALSE !== $Model->next());
 					}
 				}
 			}
@@ -1050,7 +1318,6 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 	 */
 	public function put($argRequestParams = NULL){
 		$this->_init();
-		$gmtDate = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
 		$requestParams = array();
 		$resources = FALSE;
 		if(NULL === $argRequestParams){
@@ -1060,7 +1327,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			$requestParams = $argRequestParams;
 		}
 		debug('PUT param=');
-		debug($requestParams);
+		debug(array_keys($requestParams));
 		if(isset($requestParams['datas']) && isset($requestParams['datas'][0])){
 			// 配列のPOSTはリカーシブルで処理をする
 			for($requestIdx=0; $requestIdx < count($requestParams['datas']); $requestIdx++){
@@ -1138,21 +1405,29 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						try{
 							for($fieldIdx = 0; $fieldIdx < count($fields); $fieldIdx++){
 								if(isset($requestParams[$fields[$fieldIdx]])){
-									// XXX intのincrementとdecrimentは許可する
-									if(FALSE === ('int' === $Model->describes[$fields[$fieldIdx]]['type'] && TRUE === ('increment' === strtolower($requestParams[$fields[$fieldIdx]]) || 'decrement' === strtolower($requestParams[$fields[$fieldIdx]])))){
-										// exec系以外はオートバリデート
-										$Model->validate($fields[$fieldIdx], $requestParams[$fields[$fieldIdx]]);
+									try{
+										// XXX intのincrementとdecrimentは許可する
+										if(FALSE === ('int' === $Model->describes[$fields[$fieldIdx]]['type'] && TRUE === ('increment' === strtolower($requestParams[$fields[$fieldIdx]]) || 'decrement' === strtolower($requestParams[$fields[$fieldIdx]])))){
+											// exec系以外はオートバリデート
+											$Model->validate($fields[$fieldIdx], $requestParams[$fields[$fieldIdx]]);
+										}
+										// バリデートに成功したので更新値として認める
+										$datas[$fields[$fieldIdx]] = $requestParams[$fields[$fieldIdx]];
 									}
-									// バリデートに成功したので更新値として認める
-									$datas[$fields[$fieldIdx]] = $requestParams[$fields[$fieldIdx]];
+									catch (Exception $Exception){
+										// バリデーションエラー(必須パラメータチェックエラー)
+										$this->httpStatus = 400;
+										throw new RESTException($Exception->getMessage(), $this->httpStatus);
+										break;
+									}
 								}
 								elseif($fields[$fieldIdx] == $this->restResourceCreateDateKeyName && TRUE !== (0 < strlen($Model->{$this->restResourceCreateDateKeyName}))){
 									// データ作成日付の自動補完
-									$datas[$fields[$fieldIdx]] = $gmtDate;
+									$datas[$fields[$fieldIdx]] = self::$nowGMT;
 								}
 								elseif($fields[$fieldIdx] == $this->restResourceModifyDateKeyName){
 									// データ更新日付の自動補完
-									$datas[$fields[$fieldIdx]] = $gmtDate;
+									$datas[$fields[$fieldIdx]] = self::$nowGMT;
 								}
 								elseif($fields[$fieldIdx] == $Model->pkeyName){
 									// Pkeyも入れえておく(複合キーの為の処理)
@@ -1185,8 +1460,6 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 							}
 						}
 						catch (Exception $Exception){
-							// バリデーションエラー(必須パラメータチェックエラー)
-							$this->httpStatus = 400;
 							throw new RESTException($Exception->getMessage(), $this->httpStatus);
 							break;
 						}
@@ -1248,7 +1521,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						if(TRUE === $this->restResource['me']){
 							$deepResourcePath = 'me/'.$deepResource;
 						}
-						debug('deep??'.$deepResourcePath.' & '.$this->authUserIDFieldName.' & '.$fields[$fieldIdx].' & '.(strlen($fields[$fieldIdx]) -3).' & '.strpos($fields[$fieldIdx], '_id'));
+						debug(__LINE__.'deep??'.$deepResourcePath.' & '.$this->authUserIDFieldName.' & '.$fields[$fieldIdx].' & '.(strlen($fields[$fieldIdx]) -3).' & '.strpos($fields[$fieldIdx], '_id'));
 						$isDeepModel = TRUE;
 						try{
 							$deepModel = $this->_getModel($deepResource);
@@ -1260,6 +1533,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 							// deepRESTを実行し、IDの取得をする
 							$DeepREST = new REST();
 							$DeepREST->AuthUser = $this->AuthUser;
+							$DeepREST->AuthDevice = $this->AuthDevice;
 							$DeepREST->authUserID = $this->authUserID;
 							$DeepREST->authUserIDFieldName = $this->authUserIDFieldName;
 							$DeepREST->authUserQuery = $this->authUserQuery;
@@ -1276,32 +1550,38 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 					}
 					elseif($fields[$fieldIdx] == $this->restResourceCreateDateKeyName && TRUE !== (0 < strlen($Model->{$this->restResourceCreateDateKeyName}))){
 						// データ作成日付の自動補完
-						$datas[$fields[$fieldIdx]] = $gmtDate;
+						$datas[$fields[$fieldIdx]] = self::$nowGMT;
 					}
 					elseif($fields[$fieldIdx] == $this->restResourceModifyDateKeyName){
 						// データ更新日付の自動補完
-						$datas[$fields[$fieldIdx]] = $gmtDate;
+						$datas[$fields[$fieldIdx]] = self::$nowGMT;
 					}
 					// Filterがあったらフィルター処理をする
 					$filerName = str_replace(' ', '', ucwords(str_replace('_', ' ', $this->restResourceModel. ' '. $fields[$fieldIdx]))) . 'Filter';
 					debug('$filerName='.$filerName);
-					if(FALSE !== MVCCore::loadMVCFilter($filerName, TRUE)){
-						$filterClass = MVCCore::loadMVCFilter($filerName);
-						debug($filterClass);
-						$Filter = new $filterClass();
-						$Filter->REST = $this;
-						$Filter->Model = $Model;
-						if(!isset($datas[$fields[$fieldIdx]]) ){
-							// 初期化
-							$datas[$fields[$fieldIdx]] = NULL;
-							if(0 < strlen($Model->{$fields[$fieldIdx]})){
-								$datas[$fields[$fieldIdx]] = $Model->{$fields[$fieldIdx]};
+					try {
+						if(FALSE !== MVCCore::loadMVCFilter($filerName, TRUE)){
+							$filterClass = MVCCore::loadMVCFilter($filerName);
+							debug($filterClass);
+							$Filter = new $filterClass();
+							$Filter->REST = $this;
+							$Filter->Model = $Model;
+							if(!isset($datas[$fields[$fieldIdx]]) ){
+								// 初期化
+								$datas[$fields[$fieldIdx]] = NULL;
+								if(0 < strlen($Model->{$fields[$fieldIdx]})){
+									$datas[$fields[$fieldIdx]] = $Model->{$fields[$fieldIdx]};
+								}
 							}
+							debug('original value='.$datas[$fields[$fieldIdx]]);
+							$filterMethod = 'filter'.ucfirst(strtolower($_SERVER['REQUEST_METHOD']));
+							$datas[$fields[$fieldIdx]] = $Filter->$filterMethod($datas[$fields[$fieldIdx]]);
+							debug('$filered value='.$datas[$fields[$fieldIdx]]);
 						}
-						debug('original value='.$datas[$fields[$fieldIdx]]);
-						$filterMethod = 'filter'.ucfirst(strtolower($_SERVER['REQUEST_METHOD']));
-						$datas[$fields[$fieldIdx]] = $Filter->$filterMethod($datas[$fields[$fieldIdx]]);
-						debug('$filered value='.$datas[$fields[$fieldIdx]]);
+					}
+					catch (Exception $Exception){
+						throw new RESTException($Exception->getMessage(), $this->httpStatus);
+						break;
 					}
 				}
 				// POSTに従ってModelを作成する
@@ -1359,11 +1639,25 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 					$baseBinds[$fields[$fieldIdx]] = $bindValue;
 				}
 				// DEEP-REST用のテーブルとフィールドの一覧をストックしておく
-				if(TRUE === $this->deepRESTMode && (strlen($fields[$fieldIdx]) -3) === strpos($fields[$fieldIdx], '_id') && $this->authUserIDFieldName != $fields[$fieldIdx]){
-					$deepBaseResource = substr($fields[$fieldIdx], 0, -3);
-					debug('deep??'.$deepBaseResource.'&'.$this->authUserIDFieldName.'&'.$fields[$fieldIdx].'&'.(strlen($fields[$fieldIdx]) -3).'&'.strpos($fields[$fieldIdx], '_id'));
-					$isDeepModel = TRUE;
-					$deepModels[$fields[$fieldIdx]] = $deepBaseResource;
+				if(TRUE === $this->deepRESTMode && TRUE === (TRUE === $this->restResource['me'] || $this->authUserIDFieldName != $fields[$fieldIdx])){
+					$deepBaseResource = NULL;
+					if(0 < strlen($this->restResourceRelayPrefix) && 0 === strpos($fields[$fieldIdx], $this->restResourceRelayPrefix) && (strlen($this->restResourceRelayPrefix.$fields[$fieldIdx]) -3) === strpos($this->restResourceRelayPrefix.$fields[$fieldIdx], '_id')){
+						$deepBaseResource = substr(substr($fields[$fieldIdx], 0, -3), strlen($this->restResourceRelayPrefix));
+					}
+					else if((strlen($fields[$fieldIdx]) - (3 + strlen($this->restResourceRelaySuffix))) === strpos($fields[$fieldIdx], '_id'.$this->restResourceRelaySuffix)){
+						$deepBaseResource = substr($fields[$fieldIdx], 0, - (3 + strlen($this->restResourceRelaySuffix)));
+					}
+					else if((strlen($fields[$fieldIdx]) -3) === strpos($fields[$fieldIdx], '_id')){
+						$deepBaseResource = substr($fields[$fieldIdx], 0, -3);
+					}
+					if(NULL !== $this->restResourceUserTableName && $this->authUserIDFieldName == $fields[$fieldIdx]){
+						$deepBaseResource = $this->restResourceUserTableName;
+					}
+					if(NULL !== $deepBaseResource && 0 < strlen($deepBaseResource)){
+						debug(__LINE__.'deep??'.$deepBaseResource.'&'.$this->authUserIDFieldName.'&'.$fields[$fieldIdx]);
+						$isDeepModel = TRUE;
+						$deepModels[$fields[$fieldIdx]] = $deepBaseResource;
+					}
 				}
 				// GETパラメータでbaseクエリを書き換える
 				if(is_array($requestParams[$fields[$fieldIdx]]) && isset($requestParams[$fields[$fieldIdx]]['mark']) && isset($requestParams[$fields[$fieldIdx]]['value'])){
@@ -1429,12 +1723,6 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 		$baseQuery = ' 1=1 ';
 		$baseBinds = NULL;
 		$rules = array('rules'=>array());;
-		if(TRUE === $this->restResource['me']){
-			// 認証ユーザーのリソース指定
-			// bind使うので自力で組み立てる
-			$baseQuery = ' `' . $this->authUserIDFieldName . '` = :' . $this->authUserIDFieldName . ' ';
-			$baseBinds = array($this->authUserIDFieldName => $this->authUserID);
-		}
 		try{
 			if(TRUE === $this->restResource['me'] && NULL !== $this->AuthUser && is_object($this->AuthUser) && strtolower($this->restResourceModel) == strtolower($this->AuthUser->tableName)){
 				// 自分自身のAuthモデルに対しての処理とする
@@ -1445,17 +1733,23 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			else {
 				$Model = $this->_getModel($this->restResourceModel);
 				$fields = $Model->getFieldKeys();
+				if(TRUE === $this->restResource['me']){
+					// 認証ユーザーのリソース指定
+					// bind使うので自力で組み立てる
+					$baseQuery = ' `' . $Model->tableName . '`.`' . $this->authUserIDFieldName . '` = :' . $this->authUserIDFieldName . ' ';
+					$baseBinds = array($this->authUserIDFieldName => $this->authUserID);
+				}
 				// REQUESTされているパラメータは条件文に利用する
 				for($fieldIdx = 0; $fieldIdx < count($fields); $fieldIdx++){
 					if(isset($requestParams[$fields[$fieldIdx]])){
 						// GETパラメータでbaseクエリを書き換える
 						if(is_array($requestParams[$fields[$fieldIdx]]) && isset($requestParams[$fields[$fieldIdx]]['mark']) && isset($requestParams[$fields[$fieldIdx]]['value'])){
 							// =以外の条件を指定したい場合の特殊処理
-							$baseQuery .= ' AND `' . $fields[$fieldIdx] . '` ' . $requestParams[$fields[$fieldIdx]]['mark'] . ' :' . $fields[$fieldIdx] . ' ';
+							$baseQuery .= ' AND `' . $Model->tableName . '`.`' . $fields[$fieldIdx] . '` ' . $requestParams[$fields[$fieldIdx]]['mark'] . ' :' . $fields[$fieldIdx] . ' ';
 							$bindValue = $requestParams[$fields[$fieldIdx]]['value'];
 						}
 						else{
-							$baseQuery .= ' AND `' . $fields[$fieldIdx] . '` = :' . $fields[$fieldIdx] . ' ';
+							$baseQuery .= ' AND `' . $Model->tableName . '`.`' . $fields[$fieldIdx] . '` = :' . $fields[$fieldIdx] . ' ';
 							$bindValue = $requestParams[$fields[$fieldIdx]];
 						}
 						if(NULL === $baseBinds){
@@ -1464,31 +1758,42 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						$baseBinds[$fields[$fieldIdx]] = $bindValue;
 					}
 					else if(isset($requestParams['LIKE']) && strlen($requestParams['LIKE']) > 0){
-						$baseQuery .= ' OR `' . $fields[$fieldIdx] . '` LIKE \'%'.addslashes($requestParams['LIKE']).'%\' ';
+						$baseQuery .= ' OR `' . $Model->tableName . '`.`' . $fields[$fieldIdx] . '` LIKE \'%'.addslashes($requestParams['LIKE']).'%\' ';
 					}
 					// 有効フラグの自動参照制御
 					if($this->restResourceAvailableKeyName == $fields[$fieldIdx]){
-						$baseQuery .= ' AND `' . $this->restResourceAvailableKeyName . '` = :' . $fields[$fieldIdx] . ' ';
-						$baseBinds[$fields[$fieldIdx]] = 1;
+						$baseQuery .= ' AND `' . $Model->tableName . '`.`' . $this->restResourceAvailableKeyName . '` = :' . $fields[$fieldIdx] . ' ';
+						$baseBinds[$fields[$fieldIdx]] = '1';
 					}
+				}
+				if(TRUE === $this->rootREST && isset($requestParams['QUERY']) && strlen($requestParams['QUERY']) > 0){
+					// XXX SQLインジェクション対策を後でTXに相談！
+					$baseQuery .= ' AND ' . $requestParams['QUERY'] . ' ';
 				}
 				if(FALSE !== strpos($baseQuery, '1=1  OR ')){
 					$baseQuery = str_replace('1=1  OR ', 'WHERE ', $baseQuery);
 				}
 				$query = $baseQuery;
 				$binds = $baseBinds;
+				// GROUP句指定があれば付け足す
+				if(TRUE === $this->rootREST && isset($requestParams['GROUP']) && 0 < strlen($requestParams['GROUP'])){
+					$query .= ' GROUP BY ' . $requestParams['GROUP'] . ' ';
+				}
 				// ORDER句指定があれば付け足す
 				if(isset($requestParams['ORDER']) && 0 < strlen($requestParams['ORDER'])){
 					$query .= ' ORDER BY ' . $requestParams['ORDER'] . ' ';
 				}
 				elseif(in_array($this->restResourceModifyDateKeyName, $fields)) {
-					$query .= ' ORDER BY `' . $this->restResourceModifyDateKeyName . '` DESC ';
+					$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $this->restResourceModifyDateKeyName . '` DESC ';
 				}
 				elseif(in_array($this->restResourceCreateDateKeyName, $fields)) {
-					$query .= ' ORDER BY `' . $this->restResourceCreateDateKeyName . '` DESC ';
+					$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $this->restResourceCreateDateKeyName . '` DESC ';
 				}
 				else {
-					$query .= ' ORDER BY `' . $Model->pkeyName . '` DESC ';
+					$query .= ' ORDER BY `' . $Model->tableName . '`.`' . $Model->pkeyName . '` DESC ';
+				}
+				if(TRUE === $this->rootREST && isset($requestParams['JOIN'])){
+					$query = array('QUERY' => $query, 'JOIN' => $requestParams['JOIN']);
 				}
 				debug($query);
 				$Model->load($query, $binds);
@@ -1498,7 +1803,6 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				}
 			}
 			// JSバリデートで使えるようのRuleオブジェクトをおまけで作って上げる
-			debug($Model->describes);
 			foreach($Model->describes as $key => $val){
 				$rules['rules'][$key] = array('required'=>(($val['pkey'] || $val['null'])? FALSE : TRUE), 'email'=>((FALSE === strpos(strtolower($key),'mail')) ? FALSE : TRUE), 'url'=>((FALSE === strpos(strtolower($key),'url')) ? FALSE : TRUE));
 				$rules['rules'][$key]['digits'] = FALSE;

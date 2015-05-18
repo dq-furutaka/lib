@@ -4,6 +4,7 @@ class APIControllerBase extends WebControllerBase {
 
 	public $httpStatus = 200;
 	public $outputType = "json";
+	public $validateError = "";
 	public $jsonUnescapedUnicode = true;
 
 	/**

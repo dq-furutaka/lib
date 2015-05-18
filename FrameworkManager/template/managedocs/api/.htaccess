@@ -1,9 +1,5 @@
 RewriteEngine On
 
-# PHP側でRewriteRuleを参照出来るようにする
-SetEnv RewriteRule '([^\+]*)?\.(.*)$ index.php?_c_=web/$1&_o_=$2'
-SetEnv ReverseRewriteRule '\?_c_\=web\/([^+]*)?\&_o_\=(.*) ./$1.$2'
-
 # All files with .something are skipped
 RewriteCond %{REQUEST_URI} \..+$
 RewriteCond %{REQUEST_URI} !$

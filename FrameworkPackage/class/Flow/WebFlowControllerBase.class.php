@@ -47,6 +47,7 @@ class WebFlowControllerBase extends WebControllerBase {
 				if($_GET['_c_'] === $_POST['flowpostformsection']){
 					// backflowがポストされてきたらそれをviewのformに自動APPEND
 					if($key === 'flowpostformsection-backflow-section'){
+						debug("issss ".$_POST['flowpostformsection'].":".$val);
 						Flow::$params['view'][] = array('form[flowpostformsection]' => array(HtmlViewAssignor::APPEND_NODE_KEY => '<input type="hidden" name="flowpostformsection-backflow-section" value="' . $val . '"/>'));
 						self::$flowpostformsectionUsed = TRUE;
 						$executed = TRUE;
@@ -106,8 +107,11 @@ class WebFlowControllerBase extends WebControllerBase {
 
 		// 一つ前の画面のbackflowをflowpostformsectionに自動で挿入
 		if(count(Flow::$params['backflow']) > 0){
-			$backFrowID = Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['target'] . '/' . Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['section'];
-			if('' === Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['target']){
+			$backFrowID = Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['section'];
+			if (isset(Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['target']) && 0 < strlen(Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['target'])){
+				$backFrowID = Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['target'] . '/' . $backFrowID;
+			}
+			if('' === Flow::$params['backflow'][count(Flow::$params['backflow']) -1]['section']){
 				$backFrowID = $this->section;
 			}
 			else {

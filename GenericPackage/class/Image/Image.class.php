@@ -95,7 +95,7 @@ class ImageInfo
 	 * @param string $filename ファイル名
 	 * @return object ImageInfoResultオブジェクト
 	 */
-	function &getInfoFromFile($filename)
+	public static function &getInfoFromFile($filename)
 	{
 		$null = null;
 		$fp = fopen($filename, 'rb');
@@ -123,7 +123,7 @@ class ImageInfo
 	 * @param string &$data バイナリデータ
 	 * @return object ImageInfoResultオブジェクト
 	 */
-	function &getInfoFromData(&$data)
+	public static function &getInfoFromData(&$data)
 	{
 		$image_info['w'] = 0;
 		$image_info['h'] = 0;
@@ -260,7 +260,6 @@ class ImageInfoResult
 			return;
 		}
 
-
 		$this->w = $w;
 		$this->h = $h;
 		$this->type = $type;
@@ -338,7 +337,7 @@ class ImageInfoResult
 class ImageUtil
 {
 
-	function crop($argImageBinary, $argCropLeft = 0, $argCropTop = 0, $argCropRight = 0, $argCropBottom = 0){
+	public static function crop($argImageBinary, $argCropLeft = 0, $argCropTop = 0, $argCropRight = 0, $argCropBottom = 0){
 
 		$info = ImageInfo::getInfoFromData($argImageBinary);
 		$image = imagecreatefromstring($argImageBinary);
@@ -414,7 +413,7 @@ class ImageUtil
 		return $imageBinary;
 	}
 
-	function resize($argImageBinary, $width = 0, $height = 0, $proportional = false)
+	public static function resize($argImageBinary, $width = 0, $height = 0, $proportional = false)
 	{
 		if ( $height <= 0 && $width <= 0 ) {
 			return false;
@@ -429,6 +428,7 @@ class ImageUtil
 		$height_old = $info->h;
 
 		if (false !== $proportional) {
+			// サイズ比率維持(間延びはしない！)
 			if ($width == 0) $factor = $height/$height_old;
 			elseif ($height == 0) $factor = $width/$width_old;
 			else $factor = min ( $width / $width_old, $height / $height_old);
@@ -437,6 +437,7 @@ class ImageUtil
 			$final_height = round ($height_old * $factor);
 		}
 		else {
+			// 渡された縦横で固定サイズ(間延びはしない！)
 			$final_width = $width;
 			$final_height = $height;
 
@@ -444,14 +445,13 @@ class ImageUtil
 			$height_gap = $height_old / $height;
 		}
 
-		$resizedImageData = imagecreatetruecolor( $final_width, $final_height );
+		$resizedImageData = imagecreatetruecolor($final_width, $final_height);
 
 		if ( ($info->type == IMAGETYPE_GIF) || ($info->type == IMAGETYPE_PNG) ) {
 			$trnprt_indx = imagecolortransparent($image);
 
 			// If we have a specific transparent color
 			if ($trnprt_indx >= 0) {
-
 				// Get the original image's transparent color's RGB values
 				$trnprt_color    = imagecolorsforindex($image, $trnprt_indx);
 
@@ -463,12 +463,9 @@ class ImageUtil
 
 				// Set the background color for new image to transparent
 				imagecolortransparent($resizedImageData, $trnprt_indx);
-
-
 			}
 			// Always make a transparent background color for PNGs that don't have one allocated already
 			elseif ($info->type == IMAGETYPE_PNG) {
-
 				// Turn off transparency blending (temporarily)
 				imagealphablending($resizedImageData, false);
 
@@ -588,7 +585,6 @@ class ImageInfo_Jpeg
 		return true;
 	}
 
-
 	/**
 	 * 有効なJPEGファイルのデータであるかを判定する
 	 *
@@ -597,7 +593,7 @@ class ImageInfo_Jpeg
 	 * @return boolean true  => JPEG画像
 	 *                 false => JPEG画像ではない
 	 */
-	function isValid(&$data)
+	public static function isValid(&$data)
 	{
 		//SOIセグメントの取得。
 		//先頭の2バイト。
@@ -672,7 +668,7 @@ class ImageInfo_Png
 	 * @return boolean true  => PNG画像
 	 *                 false => PNG画像ではない
 	 */
-	function isValid(&$data)
+	public static function isValid(&$data)
 	{
 		$bin_buf = substr($data, 0, 8);
 		$hex_buf = bin2hex($bin_buf);
@@ -726,7 +722,7 @@ class ImageInfo_Gif
 	 * @return boolean true  => PNG画像
 	 *                 false => PNG画像ではない
 	 */
-	function isValid(&$data)
+	public static function isValid(&$data)
 	{
 		$sig = substr($data, 0, 3);
 		$ver = substr($data, 3, 3);

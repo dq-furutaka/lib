@@ -270,6 +270,7 @@ abstract class SessionDataDB {
 		$binds = array(self::$_sessionDataPKeyName => $argPKey);
 		$Session = ORMapper::getModel(self::$_DBO, self::$_sessionDataTblName, '`' . self::$_sessionDataPKeyName . '` = :' . self::$_sessionDataPKeyName . ' limit 1', $binds);
 		$Session->remove();
+		return TRUE;
 	}
 
 	/**

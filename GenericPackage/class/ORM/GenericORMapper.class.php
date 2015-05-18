@@ -23,7 +23,6 @@ class GenericORMapper {
 
 	/**
 	 * モデルクラスを自動生成して返す
-	 * 2.0よりオートマイグレーションが付きました！
 	 */
 	public static function getAutoGenerateModel($argDBO, $argModelName, $argExtractionCondition=NULL, $argBinds=NULL, $argSeqQuery=NULL){
 
@@ -31,7 +30,7 @@ class GenericORMapper {
 		$tableName = $argModelName;
 		$modelName = self::getGeneratedModelName($tableName);
 
-		// テーブル名末尾の数値は、ナンバリングテーブル名だと過程して、外す
+		// テーブル名末尾の数値は、ナンバリングテーブル名だと仮定して、外す
 		$matches = NULL;
 		$unNumberingModelName = NULL;
 		preg_match('/^([^0-9]+)[0-9]+$/', $modelName, $matches);
@@ -45,7 +44,7 @@ class GenericORMapper {
 		}else{
 			$modelName = $modelName."Model";
 		}
-		$tableName = ucfirst($tableName);
+		//$tableName = ucfirst($tableName);
 
 		// オートマイグレートその1
 		$lastMigrationHash = NULL;
@@ -85,13 +84,15 @@ class GenericORMapper {
 			$tableDefs = self::getModelPropertyDefs($argDBO, $tableName);
 			$varDef = $tableDefs['varDef'];
 			$describeDef = $tableDefs['describeDef'];
+			$indexDef = $tableDefs['indexDef'];
 
 			// モデルクラスの自動生成
 			$varDef .= "public \$sequenceSelectQuery = \"" . $argSeqQuery . "\"; ";
 			// InterfaceはフレームワークのmodelクラスでI/Oの実装を強制する
-			$baseModelClassDefine = "class " . $modelName . " extends " . $superModelName . " implements Model { %vars% public function __construct(\$argDBO, \$argExtractionCondition=NULL, \$argBinds=NULL){ %describes% parent::__construct(\$argDBO, \$argExtractionCondition, \$argBinds); } }";
+			$baseModelClassDefine = "class " . $modelName . " extends " . $superModelName . " implements Model { %vars% public function __construct(\$argDBO, \$argExtractionCondition=NULL, \$argBinds=NULL){ %describes% %indexes% parent::__construct(\$argDBO, \$argExtractionCondition, \$argBinds); } }";
 			$baseModelClassDefine = str_replace("%vars%", $varDef, $baseModelClassDefine);
 			$baseModelClassDefine = str_replace("%describes%", $describeDef, $baseModelClassDefine);
+			$baseModelClassDefine = str_replace("%indexes%", $indexDef, $baseModelClassDefine);
 
 			// モデルクラス定義からクラス生成
 			eval($baseModelClassDefine);
@@ -109,11 +110,19 @@ class GenericORMapper {
 		$model->className = $modelName;
 
 		// テーブル定義のハッシュ値を取っておく
-		self::$modelHashs[$tableName] = sha1(serialize($model->describes));
+		$indexSerialStr = '';
+		if (0 < count($model->indexes)){
+			$indexSerialStr = serialize($model->indexes);
+		}
+		logging("migration-index:".$indexSerialStr, "migration");
+		self::$modelHashs[$tableName] = sha1($model->tableComment . $model->tableEngine . serialize($model->describes) . $indexSerialStr);
 
 		return $model;
 	}
 
+	/**
+	 * モデル定義取得
+	 */
 	public static function getModelPropertyDefs($argDBO, $tableName, $argDescribes=NULL){
 		$describes = $argDescribes;
 		if(NULL === $describes){
@@ -122,6 +131,7 @@ class GenericORMapper {
 		}
 		$describeDef = "\$this->describes = array(); ";
 		$varDef = NULL;
+		$indexDef = NULL;
 		$pkeysVarDef = "public \$pkeys = array(";
 		$pkeyCnt = 0;
 		if(is_array($describes) && count($describes) > 0){
@@ -202,7 +212,65 @@ class GenericORMapper {
 			$pkeysVarDef .= "); ";
 			$varDef .= $pkeysVarDef;
 			$varDef .= "public \$tableName = \"" . $tableName . "\"; ";
-			return array('varDef' => $varDef, 'describeDef' => $describeDef);
+			// DBエンジン、テーブルコメントの抽出
+			$tableStatuses = array();
+			$tableIndexs = array();
+			// XXX 現在はMySQL専用
+			if ("mysql" === $argDBO->DBType){
+				logging("migration SHOW TABLE STATUS LIKE '".strtolower($tableName)."'", "migration");
+				$response = $argDBO->execute("SHOW TABLE STATUS LIKE '".strtolower($tableName)."'");
+				//logging("migration res1=".$response, "migration");
+				if(FALSE !== $response){
+					$tableStatuses = $response->GetAll();
+					logging("migration:res2=".var_export($tableStatuses,true), "migration");
+				}
+				logging("migration res3=".$response, "migration");
+				// インデックスの取得
+				logging("migration SHOW INDEX FROM `".strtolower($tableName)."`", "migration");
+				$response = $argDBO->execute("SHOW INDEX FROM `".strtolower($tableName)."`");
+				if(FALSE !== $response){
+					$tableIndexs = $response->GetAll();
+					logging("migration:res5=".var_export($tableIndexs,true), "migration");
+				}
+				logging("migration:res6=".$response, "migration");
+			}
+			logging("migration:".var_export($tableStatuses, true), "migration");
+			logging("migration:".var_export($tableIndexs, true), "migration");
+			if(0 < count($tableStatuses) && isset($tableStatuses[0]) && isset($tableStatuses[0]["Comment"])){
+				$varDef .= "public \$tableComment = \"" . $tableStatuses[0]['Comment'] . "\"; ";
+			}
+			else {
+				$varDef .= "public \$tableComment = ''; ";
+			}
+			if(0 < count($tableStatuses) && isset($tableStatuses[0]) && isset($tableStatuses[0]["Engine"])){
+				$varDef .= "public \$tableEngine = \"" . $tableStatuses[0]['Engine'] . "\"; ";
+			}
+			else {
+				$varDef .= "public \$tableEngine = ''; ";
+			}
+			if(0 < count($tableIndexs) && isset($tableIndexs[0]) && isset($tableIndexs[0]["Key_name"])){
+				// ループ処理
+				for ($idx=0, $eidx=0; $idx < count($tableIndexs); $idx++){
+					if (0 < $pkeyCnt && 'PRIMARY' == $tableIndexs[$idx]['Key_name']){
+						// Pkeyのマイグレーションは既にあるので無視
+					}
+					else {
+						if (0 == $eidx){
+							$indexDef = "\$this->indexes = array(); ";
+						}
+						if (FALSE === strpos($indexDef, "\$this->indexes[\"" . $tableIndexs[$idx]["Key_name"] . "\"] = array(\"Colums\" => array(), \"Index_comment\" => \"" . $tableIndexs[$idx]["Index_comment"] . "\",); ")) {
+							$indexDef .= "\$this->indexes[\"" . $tableIndexs[$idx]["Key_name"] . "\"] = array(\"Colums\" => array(), \"Index_comment\" => \"" . $tableIndexs[$idx]["Index_comment"] . "\",); ";
+						}
+						$indexDef .= "\$this->indexes[\"" . $tableIndexs[$idx]["Key_name"] . "\"][\"Colums\"][] = \"" . $tableIndexs[$idx]["Column_name"] . "\"; ";
+						$eidx++;
+					}
+				}
+				logging("migration-index:".$indexDef, "migration");
+			}
+			else {
+				$varDef .= "public \$tableComment = ''; ";
+			}
+			return array('varDef' => $varDef, 'describeDef' => $describeDef, 'indexDef' => $indexDef);
 		}
 		else {
 			throw new Exception(__CLASS__.PATH_SEPARATOR.__METHOD__.PATH_SEPARATOR.__LINE__);

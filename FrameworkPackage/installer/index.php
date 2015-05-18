@@ -11,21 +11,19 @@
 // また、インストーラーにはチュートリアルな内容が若干含まれています。
 // 是非フレームワーク利用の参考にして下さい。
 
-// 以下より実行スクリプト開始
+// プロジェクト名の定義
 define("PROJECT_NAME", "UNICORN");
 mb_http_output("UTF-8");
 
-// ダウンロード直後のデフォルトのフレームワークパスを定義しておく
-// XXX インストーラによって変更されます。
-$frameworkPath = dirname(dirname(dirname(dirname(__FILE__))))."/lib/FrameworkPackage";
-// org
-//$frameworkPath = dirname(dirname(dirname(dirname(__FILE__))))."/lib/FrameworkPackage";
 
-// ダウンロード直後のデフォルトのフレームワーク管理機能のパスを定義しておく
-// XXX インストーラによって変更されます。
-$fwmgrPath = dirname(dirname(dirname(dirname(__FILE__))))."/lib/FrameworkManager";
-// org
-//$fwmgrPath = dirname(dirname(dirname(dirname(__FILE__))))."/lib/FrameworkManager";
+// フレームワークパスを定義しておく
+$frameworkPath = dirname(dirname(dirname(__FILE__)))."/FrameworkPackage";
+
+// プロジェクトのパスを定義しておく
+$projectPath = dirname(dirname(dirname(__FILE__)))."/FrameworkManager/sample/ProjectPackage";
+
+// フレームワーク管理機能のパスを定義しておく
+$fwmgrPath = dirname(dirname(dirname(__FILE__)))."/FrameworkManager";
 
 
 // CLI実行かどうかのフラグの初期化
@@ -264,7 +262,7 @@ body {
 	margin-left: auto;
 	margin-right: auto;
 	/* style setting */
-	background-color: rgba(255, 255, 255, 0.9);
+	background-color: rgba(255, 255, 255, 0.95);
 }
 
 .navigation_box {
@@ -408,7 +406,7 @@ dl.page_sub_body {
 /* デフォルトでは非表示にしていく要素の定義 */
 #page1, #page2, #page3, #page4, #page5, #nextstep, #execute, #apply, #endstep, #page1_sub_title4, .errormsg
 , #page2_body2, #page2_body3, #page2_body5, #page2_body6, #page2_body7, #page2_body8, #page2_body9, #page2_body10
-, #page3_body2, #page3_body3, #page3_body4, #page3_body5, #page3_body6, #page3_body7, #page3_body8, #page3_body9, #page3_body10, #page3_body11, #page3_body12, #page3_body13, #page4_body2
+, #page3_body2, #page3_body3, #page3_body4, #page3_body5, #page3_body6, #page3_body7, #page3_body8, #page3_body9, #page3_body10, #page3_body11, #page3_body12, #page3_body13, #page3_body33, #page4_body2
 {
 	/* box setting */
 	display: none;
@@ -686,7 +684,11 @@ $(document).ready(function(){
 
 	// 各ステップの設定数定義
 	var maxStep2apply = 8;
+	<?php if("UNICORN" === PROJECT_NAME){ ?>
 	var maxStep3apply = 12;
+	<?php } else { ?>
+	var maxStep3apply = 32;
+	<?php } ?>
 	var maxStep4apply = 1;
 
 	// ステップを横断して利用する変数の定義
@@ -1083,6 +1085,18 @@ $(document).ready(function(){
 					var data = { fwmpath: fwmpath, fwmdbuser: fwmdbuser, fwmdbpass: fwmdbpass, fwmdb: fwmdb };
 				}
 				else if(8 == stepApply){
+					if(true == $("#input-skipcreateuser").prop("checked")){
+						// この設定をスキップして次の設定へ
+						$("#page" + argStep + "_body" + stepApply).hide();
+						$("#page" + argStep + "_body" + (stepApply+1)).show();
+						$("#page" + argStep + "_body" + stepApply).hide();
+						// 次のステップへ自動で移動
+						stepApply++;
+						$("#page" + argStep + "_body" + stepApply).show();
+						// ページの上部へ移動
+						inPageLocation("#pagetop");
+						return;
+					}
 					if(1 > $("#input-fwmusername").val().length){
 						$("#page" + argStep + " .errormsg").show();
 						$("#page" + argStep + " .errormsg").text("(!!!)ログインユーザー名を入力して下さい。");
@@ -1142,6 +1156,7 @@ $(document).ready(function(){
 					$("#step" + argStep + "input" + (stepApply - 1) + "form_box .loading").addClass("active");
 					var data = { fwmpath: fwmpath, fwmdocpath: $("#fwmdocpath").text(), newfwmdocpath: $("#input-newfwmdocpath").val(), fwmurl: $("#fwmurldisp").text() };
 				}
+				<?php if("UNICORN" === PROJECT_NAME){ ?>
 				else if(12 == stepApply){
 					// 何もせず次へ(ステップは変わらない)
 					$("#page" + argStep + "_body" + stepApply).hide();
@@ -1157,6 +1172,32 @@ $(document).ready(function(){
 					inPageLocation("#pagetop");
 					return;
 				}
+				<?php } else { ?>
+				else if(12 == stepApply){
+					// 何もせず次へ(ステップは変わらない)
+					$("#page" + argStep + "_body" + stepApply).hide();
+					// 次のステップへ自動で移動
+					stepApply++;
+					$("#page" + argStep + "_body" + stepApply).show();
+					$("#page" + argStep + " .hlog").text("");
+					inPageLocation("#pagetop");
+					return;
+				}
+				else if(13 == stepApply){
+					$("#page" + argStep + "_body" + stepApply).hide();
+					// 次のステップへ自動で移動
+					stepApply = 33;
+					$("#page" + argStep + "_body" + stepApply).show();
+					$("#page" + argStep + " .hlog").text("");
+					$("#nextstep").show();
+					// 実行ボタンは初期化しておく
+					$("#apply").hide();
+					$("#apply").removeAttr("disabled", "");
+					// ページの上部へ移動
+					inPageLocation("#pagetop");
+					return;
+				}
+				<?php } ?>
 
 				// 各種フォームパーツの無効化
 				$("#input-fwmpath").attr("disabled", "disabled");
@@ -1212,7 +1253,7 @@ $(document).ready(function(){
 							fwmpath = $("#input-newfwmpath").val();
 							$("#page" + argStep + "_body" + (stepApply - 1)).hide();
 							// 次のステップへ自動で移動
-							stepApply++;
+							stepApply = 12;
 							$("#page" + argStep + "_body" + stepApply).show();
 							// ページの上部へ移動
 							inPageLocation("#pagetop");
@@ -1400,12 +1441,18 @@ $(document).ready(function(){
 	// 各種フォームの初期値のセット
 	$("#input-path").val("<?php echo $frameworkPath; ?>");
 	$("#input-fwmbaseurl").val($("#input-fwmbaseurl").val() + "<?php $urls = explode('?', $_SERVER['REQUEST_URI']); $urls[0] = str_replace('/FrameworkPackage/installer/', '/FrameworkManager/template/', $urls[0]); echo $_SERVER['SERVER_NAME'].$urls[0]; ?>");
-	$("#input-fwmpath").val("<?php echo $fwmgrPath; ?>");
+	$("#input-fwmpath").val("<?php if("UNICORN" === PROJECT_NAME) { echo $fwmgrPath; } else { echo $projectPath; } ?>");
 	$("#input-mysqluser").val("root");
 	$("#input-mysqlpass").val("root");
+	<?php if("UNICORN" === PROJECT_NAME) { ?>
 	$("#input-fwmdbuser").val("fwm");
 	$("#input-fwmdbpass").val("fwmpass");
 	$("#input-fwmdb").val("fwm");
+	<?php } else { ?>
+	$("#input-fwmdbuser").val("project");
+	$("#input-fwmdbpass").val("projectpass");
+	$("#input-fwmdb").val("project");
+	<?php } ?>
 	fwmpath = "<?php echo $fwmgrPath; ?>";
 
 	// デバッグフラグの設定
@@ -1427,31 +1474,31 @@ $(document).ready(function(){
 			<h2 id="page1_title" class="page_title"><?php echo PROJECT_NAME; ?>へようこそ。</h2>
 			<div id="page1_body" class="page_body">
 				<p>
-					<strong class="orange">フレームワークのインストールを開始します。</strong><br>
+					<strong class="orange"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク<?php } else { echo PROJECT_NAME; } ?>のインストールを開始します。</strong><br>
 					<br>
 					<small>インストールはこのページに従って</small>
 					<br>
 					<strong>たった4ステップの作業</strong>
 					<br>
 					<small>を行うだけで完了します。</small>
-					<br>
+					<?php if("UNICORN" === PROJECT_NAME) { ?><br>
 					<strong>しかも、そのうちの3ステップは”任意”です。</strong>
-					<br>
+					<?php } ?><br>
 					<br>
 					<br>
 					<strong>4ステップはこうなっています。</strong>
 					<br>
 					<small>・システム要件のバリデーション(必須)</small>
 					<br>
-					<small>・フレームワークの各種パスの確認と変更(任意)</small>
+					<small>・フレームワークの各種パスの確認と変更(<?php if("UNICORN" === PROJECT_NAME) { ?>任意<?php } else { ?>必須<?php } ?>)</small>
 					<br>
-					<small>・フレームワーク管理機能のインストール(任意)</small>
+					<small>・<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク管理機能のインストール(任意)<?php } else { echo PROJECT_NAME; ?>のインストール(必須)<?php } ?></small>
 					<br>
-					<small>・フレームワーク管理機能のアクセス制限設定(任意)</small>
+					<small>・<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク<?php } else { echo PROJECT_NAME; } ?>管理機能のアクセス制限設定(任意)</small>
 					<br>
 					<br>
 					<br>
-					<strong>しかし、このフレームワークに不慣れな人はフレームワーク管理機能をインストールする事を強く薦めます。</strong>
+					<?php if("UNICORN" === PROJECT_NAME) { ?><strong>しかし、このフレームワークに不慣れな人はフレームワーク管理機能をインストールする事を強く薦めます。</strong>
 					<br>
 					<br>
 					<small>フレームワークを</small>
@@ -1464,7 +1511,7 @@ $(document).ready(function(){
 					<br>
 					<br>
 					<strong>是非、それらを利用して下さい。</strong>
-					<br>
+					<?php } else {?><strong>「インストールを開始する」を押して、インストールを開始しましょう！</strong><?php } ?><br>
 				</p>
 			</div>
 		</article>
@@ -1534,7 +1581,7 @@ $(document).ready(function(){
 	</section>
 	<section id="page2" class="page_box">
 		<article class="page">
-			<h3 id="page2_title" class="page_title"><strong class="orange">STEP:2</strong><br>フレームワークの各種パスの確認と変更(任意)</h3>
+			<h3 id="page2_title" class="page_title"><strong class="orange">STEP:2</strong><br>フレームワークの各種パスの確認と変更(<?php if("UNICORN" === PROJECT_NAME) { ?>任意<?php } else { ?>必須<?php } ?>)</h3>
 			<div id="page2_body1" class="page_body">
 				<p>
 					<strong class="orange">先ず、フレームワークの現在のパスを確認させて下さい。</strong>
@@ -1748,7 +1795,7 @@ $(document).ready(function(){
 					<strong>設定ファイルの内容を良く確認し、「設定」ボタンを押して下さい。</strong>
 					<br>
 					「設定」ボタンを押すと同時に、内容は自動的に書き換えられます。
-					<br>
+					<?php if("UNICORN" === PROJECT_NAME) { ?><br>
 					<br>
 					<br>
 					<strong class="red">ちなみに、フレームワーク内のクラスの利用方法は簡単です。</strong>
@@ -1756,7 +1803,7 @@ $(document).ready(function(){
 					<br>
 					ココに表示されている<strong>"パッケージ名"(例:DBO節などのタグ名)は、そのままクラス名</strong>となります。
 					<br>
-					<strong>「<?php echo PROJECT_NAME; ?>.php」をincludeして</strong>
+					<strong>「UNICORN」をincludeして</strong>
 					<br>
 					<strong>後はクラス名を指定する(例:$DB = new DBO();)</strong>
 					<br>
@@ -1765,8 +1812,8 @@ $(document).ready(function(){
 					<br>
 					<br>
 					<br>
-					<strong>フレームワークの詳しい利用方法は、<a target="_blank" href="http://saimushi.github.io/<?php echo PROJECT_NAME; ?>/">UNICORNのWebサイト</a>を確認して下さい。</strong>
-					<br>
+					<strong>フレームワークの詳しい利用方法は、<a target="_blank" href="http://unicorn-project.github.io">UNICORNのWebサイト</a>を確認して下さい。</strong>
+					<?php } ?><br>
 					<br>
 				</p>
 			</div>
@@ -1791,15 +1838,22 @@ $(document).ready(function(){
 					<strong class="green">フレームワークの各種パスの確認と変更が完了しました。</strong>
 					<br>
 					<strong class="green">フレームワークのインストールがが完了しました。</strong>
+					<?php if("UNICORN" === PROJECT_NAME) { ?><strong class="orange">
 					<br>
-					<strong class="orange">
 						※次以降はフレームワーク管理機能のインストール(任意)になります。
 						フレームワーク管理機能のインストール(任意)を行う場合は、「次のステップへ」ボタンを押して下さい。
 					</strong>
 					<br>
 					<br>
-					<strong>フレームワークの詳しい利用方法は、<a target="_blank" href="http://saimushi.github.io/<?php echo PROJECT_NAME; ?>/">UNICORNのWebサイト</a>を確認して下さい。</strong>
+					<strong>フレームワークの詳しい利用方法は、<a target="_blank" href="http://unicorn-project.github.io">UNICORNのWebサイト</a>を確認して下さい。</strong>
+					<?php } else { ?><br>
 					<br>
+					※次以降はいよいよ3ステップ目、
+					<br>
+					<strong class="orange"><?php echo PROJECT_NAME; ?>本体のインストール</strong>になります。
+					<br>
+					<strong class="orange">「次のステップへ」ボタンを押して下さい。</strong>
+					<?php } ?><br>
 					<br>
 				</p>
 			</div>
@@ -1813,17 +1867,17 @@ $(document).ready(function(){
 	</section>
 	<section id="page3" class="page_box">
 		<article class="page">
-			<h3 id="page3_title" class="page_title"><strong class="orange">STEP:3</strong><br>フレームワーク管理機能のインストール(任意)</h3>
+			<h3 id="page3_title" class="page_title"><strong class="orange">STEP:3</strong><br><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク管理機能のインストール(任意)<?php } else { echo PROJECT_NAME; ?>本体のインストール(必須)<?php } ?></h3>
 			<div id="page3_body1" class="page_body">
 				<p>
-					<strong class="orange">先ず、フレームワーク管理機能の現在のパスを確認させて下さい。</strong>
+					<strong class="orange">先ず、<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク管理機能<?php } else { echo PROJECT_NAME; ?>本体<?php } ?>の現在のパスを確認させて下さい。</strong>
 					<br>
 					<br>
-					フレームワーク管理機能は”FrameworkManager”(以後、フレームワークマネージャーと呼びます)と言うディレクトリ名で
+					<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク管理機能は”FrameworkManager”(以後、フレームワークマネージャーと呼びます)<?php } else { echo PROJECT_NAME; ?>本体は”<?php echo PROJECT_NAME; ?>Package”<?php } ?>と言うディレクトリ名で
 					<br>
 					ダウンロード直後は
 					<br>
-					<strong class="orange"><?php echo $fwmgrPath; ?></strong>
+					<strong class="orange"><?php if("UNICORN" === PROJECT_NAME) { echo $fwmgrPath; } else { echo $projectPath; } ?></strong>
 					<br>
 					に、あるハズです。
 					<br>
@@ -1844,14 +1898,14 @@ $(document).ready(function(){
 			</div>
 			<div id="page3_body2" class="page_body">
 				<p>
-					<strong class="green">フレームワークマネージャーは指定のパスで確認出来ました！</strong>
+					<strong class="green"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>本体<?php } ?>は指定のパスで確認出来ました！</strong>
 					<br>
 					<br>
 					<strong id="fwmpath" class="green"></strong>
 					<br>
 					<br>
 					<br>
-					<strong class="orange">フレームワークマネージャーを、指定の任意のパスに移動する事が出来ます。</strong>
+					<strong class="orange"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>本体<?php } ?>を、指定の任意のパスに移動する事が出来ます。</strong>
 					<br>
 					<br>
 					移動する場合は以下のフォームに、<strong>移動先となるパスを入力して「設定」ボタンを押して下さい。</strong>
@@ -1876,7 +1930,7 @@ $(document).ready(function(){
 			</div>
 			<div id="page3_body4" class="page_body">
 				<p>
-					<strong class="green">フレームワークマネージャーのパスの設定が無事に完了しました！</strong>
+					<strong class="green"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>本体<?php } ?>のパスの設定が無事に完了しました！</strong>
 					<br>
 					<br>
 					<strong>下の移動ログを確認し、「設定」ボタンを押して下さい。</strong>
@@ -1886,7 +1940,7 @@ $(document).ready(function(){
 			</div>
 			<div id="page3_body5" class="page_body">
 				<p>
-					<strong class="orange">フレームワークマネージャー用のデータベースを作成します。</strong>
+					<strong class="orange"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>用のデータベースを作成します。</strong>
 					<br>
 					<br>
 					<strong class="red">
@@ -1942,19 +1996,23 @@ $(document).ready(function(){
 			</div>
 			<div id="page3_body6" class="page_body">
 				<p>
-					<strong class="green">フレームワークマネージャー用のデータベースを作成しました！</strong>
+					<strong class="green"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>用のデータベースを作成しました！</strong>
 					<br>
 					<br>
 					<strong class="orange">
-						フレームワークマネージャー用のデータベースへテスト接続と
-						フレームワークマネージャーの設定ファイルの更新を行います。
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>用のデータベースへテスト接続と
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>の設定ファイルの更新を行います。
 					</strong>
 					<br>
 					<br>
-					<strong>作成したフレームワークマネージャー用のデータベースの接続情報を入力して「設定」ボタンを押して下さい。</strong>
+					<strong>作成した<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>用のデータベースの接続情報を入力して「設定」ボタンを押して下さい。</strong>
 					<br>
 					<br>
+					<?php if("UNICORN" === PROJECT_NAME) { ?>
 					<strong>以前のステップでインストーラーによってデータベース作成している場合は、そのまま「設定」ボタンを押して下さい。</strong>
+					<?php } else { ?>
+					<strong>デフォルトのデータベース定義を利用している場合、ないし分からない場合は、そのまま「設定」ボタンを押して下さい。</strong>
+					<?php } ?>
 					<br>
 					<br>
 				</p>
@@ -1986,12 +2044,12 @@ $(document).ready(function(){
 			<div id="page3_body7" class="page_body">
 				<p>
 					<strong class="green">
-						フレームワークマネージャー用のデータベースへのテスト接続に成功しました！
-						フレームワークマネージャーの設定ファイルを更新しました！
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>用のデータベースへのテスト接続に成功しました！
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>の設定ファイルを更新しました！
 					</strong>
 					<br>
 					<strong class="orange">
-						フレームワークマネージャーが利用する、データベーステーブルの作成を行います。
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>が利用する、データベーステーブルの作成を行います。
 					</strong>
 					<br>
 					以下のSQL文を実行し、データベースにテーブルを追加します。
@@ -2008,25 +2066,46 @@ $(document).ready(function(){
 			<div id="page3_body8" class="page_body">
 				<p>
 					<strong class="green">
-						フレームワークマネージャー用のデータベースへテーブルを追加しました！
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; } ?>用のデータベースへテーブルを追加しました！
 					</strong>
 					<br>
+					<?php if("UNICORN" === PROJECT_NAME) { ?>
 					<strong class="orange">
 						フレームワークマネージャーにログインするデフォルトアカウントを設定します。
 					</strong>
 					<br>
 					ここで設定するデフォルトアカウントはフレームワークマネージャーのフル権限を持ちます。
+					<?php } else { ?>
+					<strong class="orange">
+						<?php echo PROJECT_NAME; ?>管理機能にログインするデフォルトアカウントを設定します。
+					</strong>
+					<br>
+					デフォルトアカウントを設定する事により、フレームワークが標準で提供する、プロジェクト専用の管理機能が利用出来るようになります！
+					<br>
+					ここで設定するデフォルトアカウントはプロジェクト管理機能のフル権限を持ちます。
+					<?php } ?>
 					<br>
 					また、ここで設定する<strong class="red">デフォルトアカウントのIDとパスワードはフレームワークの設定ファイル等には保存されず
 					ファイルから探り当てる事等は出来ませんので、忘れないように大切に保管して下さい。</strong>
 					<br>
 					<br>
+					<?php if("UNICORN" === PROJECT_NAME) { ?>
 					<strong>以下にユーザー名・メールアドレスとパスワードを入力し「設定」ボタンを押して下さい。</strong>
+					<?php } else { ?>
+					<strong>
+					以下にユーザー名・メールアドレスとパスワードを入力し「設定」ボタンを押して下さい。
+					<br>
+					<br>
+					この手順はスキップする事が出来ます！
+					<br>
+					プロジェクト専用の管理機能が不要な場合は「この手順をスキップする」にチェックを入れて、「設定」ボタンを押して下さい。
+					</strong>
+					<?php } ?>
 					<br>
 					<br>
 				</p>
 				<br>
-				<small>フレームワークマネージャーのログインユーザー名</small>
+				<small><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>のログインユーザー名</small>
 				<div id="step3input8form_box" class="text-input-form">
 					<form id="step3input8-1form" name="step3input8-1form">
 						<input id="input-fwmusername" class="input-text" type="text" name="fwmusername" value="" maxlenght="255" />
@@ -2034,7 +2113,7 @@ $(document).ready(function(){
 					</form><span class="loading"></span>
 				</div>
 				<br>
-				<small>フレームワークマネージャーのログインユーザーメールアドレス(ID)</small>
+				<small><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>のログインユーザーメールアドレス(ID)</small>
 				<div id="step3input8-2form_box" class="text-input-form">
 					<form id="step3input8-2form" name="step3input8-2form">
 						<input id="input-fwmusermail" class="input-text" type="text" name="fwmusermail" value="" maxlenght="255" />
@@ -2042,34 +2121,43 @@ $(document).ready(function(){
 					</form>
 				</div>
 				<br>
-				<small>フレームワークマネージャーのログインパスワード</small>
+				<small><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>のログインパスワード</small>
 				<div id="step3input8-3form_box" class="text-input-form">
 					<form id="step3input8-3form" name="step3input8-3form">
 						<input id="input-fwmuserpass" class="input-text" type="password" name="fwmuserpass" value="" maxlenght="255" />
 						<input id="input-fwmuserpass-reset" class="input-reset" type="reset" value="×" />
 					</form>
 				</div>
+				<?php if("UNICORN" !== PROJECT_NAME) { ?>
+				<br>
+				<small>この手順をスキップする</small>
+				<div id="step3input8-4form_box" class="text-checkbox-form">
+					<form id="step3input8-4form" name="step3input8-4form">
+						<input id="input-skipcreateuser" class="input-checkbox" type="checkbox" name="skipcreateuser" />
+					</form>
+				</div>
+				<?php } ?>
 			</div>
 			<div id="page3_body9" class="page_body">
 				<p>
 					<strong class="green">
-						フレームワークマネージャー用のデータベースへテーブルを追加しました！
+						<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>用のデータベースへレコードを追加しました！
 					</strong>
 					<br>
 					<strong class="orange">
-						最後に、フレームワークマネージャーの公開ディレクトリの移動を行います。
+						<?php if("UNICORN" === PROJECT_NAME) { ?>最後に、フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>の公開ディレクトリの移動を行います。
 					</strong>
 					<br>
-					公開ディレクトリを指定して、フレームワークマネージャーを公開しましょう！
+					公開ディレクトリを指定して、<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>を公開しましょう！
 					<br>
-					公開する事により、フレームワークマネージャーを利用出来るようになります。
+					公開する事により、<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>を利用出来るようになります。
 					<br>
 					また、公開してもIDとパスワードが設定されています。
 					<br>
 					不要にアクセスされる事は無いので安心して下さい。
 					<br>
 					<br>
-					フレームワークマネージャーの公開ディレクトリは現在
+					<?php if("UNICORN" === PROJECT_NAME) { ?>フレームワークマネージャー<?php } else { echo PROJECT_NAME; ?>管理機能<?php } ?>の公開ディレクトリは現在
 					<br>
 					<strong id="fwmdocpath" class="orange"></strong>
 					<br>
@@ -2144,6 +2232,7 @@ $(document).ready(function(){
 					<br>
 				</p>
 			</div>
+			<?php if("UNICORN" === PROJECT_NAME){ ?>
 			<div id="page3_body13" class="page_body">
 				<p>
 					<strong class="green">おめでとう御座います！！</strong>
@@ -2182,9 +2271,69 @@ $(document).ready(function(){
 					</strong>
 					<br>
 					<br>
-					<strong>フレームワークマネージャーの詳しい利用方法は、<a target="_blank" href="http://saimushi.github.io/<?php echo PROJECT_NAME; ?>/">UNICORNのWebサイト</a>を確認して下さい。</strong>
+					<strong>フレームワークマネージャーの詳しい利用方法は、<a target="_blank" href="http://unicorn-project.github.io">UNICORNのWebサイト</a>を確認して下さい。</strong>
 				</p>
 			</div>
+			<?php } else { ?>
+			<div id="page3_body13" class="page_body">
+					<strong class="orange">
+						Auto-REST機能を有効にする為にAPIの公開ディレクトリの移動を行います。
+					</strong>
+					<br>
+					※準備中
+					<br>
+					<br>
+				</p>
+				<br>
+				<div id="step3input9form_box" class="text-input-form">
+					<form id="step3input9form" name="step3input9form">
+						<input id="input-fwmdocpath" class="input-text" type="text" name="fwmdocpath" value="" maxlenght="255" />
+						<input id="input-fwmdocpath-reset" class="input-reset" type="reset" value="×" />
+					</form><span class="loading"></span>
+				</div>
+			</div>
+			<div id="page3_body33" class="page_body">
+				<p>
+					<strong class="green">おめでとう御座います！！</strong>
+					<br>
+					<br>
+					<strong class="green">フレームワークマネージャーのインストールがが完了しました。</strong>
+					<br>
+					<br>
+					以下のURLより、フレームワークマネージャーにアクセスする事が可能です。
+					<br>
+					<br>
+					<br>
+					<a id="fwmurl" href="./lib/FrameworkManager/template/managedocs/" target="_blank" class="green"><strong id="fwmurldisp" class="green">./lib/FrameworkManager/template/managedocs/</strong>&nbsp;&nbsp;(新しいウィンドウ・タブで開きます)</a>
+					<br>
+					<br>
+					<br>
+					また、設定されたログインIDとパスワードは
+					<br>
+					<br>
+					ID: <strong class="green" id="fwmusermail">admin@myserver.myadmin</strong>
+					<br>
+					パスワード: <strong class="green" id="fwmuserpass">abcd1234</strong>
+					<br>
+					<br>
+					と、なっています。
+					<br>
+					<br>
+					<br>
+					<strong class="green">フレームワークマネージャーを活用して、より高速で柔軟な開発が出来る事を願っています！</strong>
+					<br>
+					<br>
+					<br>
+					<strong class="orange">
+						※次以降はフレームワークマネージャーのアクセス制限の確認・設定(任意)が行えます。
+						フレームワークマネージャーのアクセス制限の確認・設定(任意)を行う場合は、「次のステップへ」ボタンを押して下さい。
+					</strong>
+					<br>
+					<br>
+					<strong>フレームワークマネージャーの詳しい利用方法は、<a target="_blank" href="http://unicorn-project.github.io">UNICORNのWebサイト</a>を確認して下さい。</strong>
+				</p>
+			</div>
+			<?php } ?>
 			<div class="page_body">
 				<pre class="hlog"></pre>
 			</div>
@@ -2271,7 +2420,7 @@ $(document).ready(function(){
 					インストーラーをブラウザから閉じて、インストールを完全に終了する事が出来ます。
 					<br>
 					<br>
-					<strong>フレームワークの詳しい利用方法は、<a target="_blank" href="http://saimushi.github.io/<?php echo PROJECT_NAME; ?>/">UNICORNのWebサイト</a>を確認して下さい。</strong>
+					<strong>フレームワークの詳しい利用方法は、<a target="_blank" href="http://unicorn-project.github.io">UNICORNのWebサイト</a>を確認して下さい。</strong>
 					<br>
 					<br>
 				</p>
@@ -2293,15 +2442,15 @@ $(document).ready(function(){
 			</div>
 			<div id="navigatestep2" class="navigate_step leftfloat">
 				<p class="navigate_header">STEP:2</p>
-				<div class="navigate_body">フレームワークの各種パスの確認と変更(任意)</div>
+				<div class="navigate_body">フレームワークの各種パスの確認と変更(<?php if("UNICORN" === PROJECT_NAME) { ?>任意<?php } else { ?>必須<?php } ?>)</div>
 			</div>
 			<div id="navigatestep3" class="navigate_step leftfloat">
 				<p class="navigate_header">STEP:3</p>
-				<div class="navigate_body">フレームワーク管理機能のインストール(任意)</div>
+				<div class="navigate_body"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク管理機能のインストール(任意)<?php } else { echo PROJECT_NAME; ?>のインストール(必須)<?php } ?></div>
 			</div>
 			<div id="navigatestep4" class="navigate_step leftfloat">
 				<p class="navigate_header">STEP:4</p>
-				<div class="navigate_body">フレームワーク管理機能のアクセス制限の設定(任意)</small></div>
+				<div class="navigate_body"><?php if("UNICORN" === PROJECT_NAME) { ?>フレームワーク<?php } else { echo PROJECT_NAME; } ?>管理機能のアクセス制限の設定(任意)</small></div>
 			</div>
 		</div>
 	</nav>
@@ -2701,10 +2850,19 @@ elseif(isset($_GET["a"])){
 		// フレームワークマネージャーのパス確認
 		if(isset($_GET["apply"]) && 1 === (int)$_GET["apply"]) {
 			$path = $_POST["fwmpath"];
-			// 送られたパスの配下にフレームワークマネージャーがあるかどうかを調べる
-			if(false === is_file($path."/core/FrameworkManager.config.xml")){
-				// 存在を確認出来ず
-				exit("{\"ok\":false,\"error\":\"指定されたパス「" . $path . "」にフレームワークマネージャーを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+			if("UNICORN" === PROJECT_NAME) {
+				// 送られたパスの配下にフレームワークマネージャーがあるかどうかを調べる
+				if(false === is_file($path."/core/FrameworkManager.config.xml")){
+					// 存在を確認出来ず
+					exit("{\"ok\":false,\"error\":\"指定されたパス「" . $path . "」にフレームワークマネージャーを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+				}
+			}
+			else {
+				// 送られたパスの配下にプロジェクトのconfig.xmlがあるかどうかを調べる
+				if(false === is_file($path."/core/".PROJECT_NAME.".config.xml")){
+					// 存在を確認出来ず
+					exit("{\"ok\":false,\"error\":\"指定されたパス「" . $path . "」に".PROJECT_NAME."を見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+				}
 			}
 			// 見つかったら、4設定目で使うcreatedb文を今の内に取っておく
 			exit(json_encode(array("ok"=>true,"createdbsql"=>file_get_contents($path."/core/createdb.sql"))));
@@ -2855,14 +3013,29 @@ elseif(isset($_GET["a"])){
 				exit("{\"ok\":false,\"error\":\"drop文の実行に失敗しました。 \\n " . mysqli_error($connect) . " \\n 考えられる理由: \\n 1.指定された設定情報にdrop tableの実行権限が無いかも知れません。\"}");
 			}
 			mysqli_close($connect);
-			// 全ての接続テストにクリアしたので、受け取ったデータベース接続情報で、フレームワークマネージャーのDB接続情報設定を書き換える
-			$fwmConfXMLPath = $path."/core/FrameworkManager.config.xml";
-			if(false === is_file($fwmConfXMLPath)){
-				// create文が見つからないエラー！
-				exit("{\"ok\":false,\"error\":\"" . $path."/core/FrameworkManager.config.xmlを見つけられませんでした。\"}");
+			if("UNICORN" === PROJECT_NAME) {
+				// 全ての接続テストにクリアしたので、受け取ったデータベース接続情報で、フレームワークマネージャーのDB接続情報設定を書き換える
+				$fwmConfXMLPath = $path."/core/FrameworkManager.config.xml";
+				if(false === is_file($fwmConfXMLPath)){
+					// create文が見つからないエラー！
+					exit("{\"ok\":false,\"error\":\"" . $path."/core/FrameworkManager.config.xmlを見つけられませんでした。\"}");
+				}
+			}
+			else {
+				// 全ての接続テストにクリアしたので、受け取ったデータベース接続情報で、プロジェクト管理機能のDB接続情報設定を書き換える
+				$fwmConfXMLPath = $path."/core/".PROJECT_NAME.".config.xml";
+				if(false === is_file($fwmConfXMLPath)){
+					// create文が見つからないエラー！
+					exit("{\"ok\":false,\"error\":\"" . $path."/core/".PROJECT_NAME.".config.xmlを見つけられませんでした。\"}");
+				}
 			}
 			$fwmConfXML = simplexml_load_file($fwmConfXMLPath);
-			$fwmConfXML->FrameworkManager->DB_DSN = "mysqli://" . $_POST["fwmdbuser"] . ":" . $_POST["fwmdbpass"] . "@localhost/" . $_POST["fwmdb"];
+			if("UNICORN" === PROJECT_NAME) {
+				$fwmConfXML->FrameworkManager->DB_DSN = "mysqli://" . $_POST["fwmdbuser"] . ":" . $_POST["fwmdbpass"] . "@localhost/" . $_POST["fwmdb"];
+			}
+			else {
+				$fwmConfXML->{PROJECT_CONFIG_PREFIX}->DB_DSN = "mysqli://" . $_POST["fwmdbuser"] . ":" . $_POST["fwmdbpass"] . "@localhost/" . $_POST["fwmdb"];
+			}
 			// XML文字列を再生成
 			$fwmConfXML->asXML($fwmConfXMLPath);
 			installerlog($fwmConfXML->asXML());
@@ -2888,9 +3061,14 @@ elseif(isset($_GET["a"])){
 				exit("{\"ok\":false,\"error\":\"create文の実行に失敗しました。 \\n " . mysqli_error($connect) . " \\n 考えられる理由: \\n 1.指定された設定情報にcreate tableの実行権限が無いかも知れません。 \\n 2.指定された設定情報にinsertの実行権限が無いかも知れません。\"}");
 			}
 			mysqli_close($connect);
-
-			// 次のステップの為にフレームワークマネージャーの公開ディレクトリパス情報を返す
-			exit("{\"ok\":true, \"fwmdocpath\":\"" . $path."/template/managedocs" . "\"}");
+			if("UNICORN" === PROJECT_NAME) {
+				// 次のステップの為にフレームワークマネージャーの公開ディレクトリパス情報を返す
+				exit("{\"ok\":true, \"fwmdocpath\":\"" . $path."/template/managedocs" . "\"}");
+			}
+			else {
+				// 次のステップの為にプロジェクト管理機能の公開ディレクトリパス情報を返す
+				exit("{\"ok\":true, \"fwmdocpath\":\"" . $path."/managedocs" . "\"}");
+			}
 		}
 		else if(isset($_GET["apply"]) && 8 === (int)$_GET["apply"]) {
 			// MySQLに接続してユーザーテーブルにレコードをインサートする
@@ -2902,11 +3080,24 @@ elseif(isset($_GET["a"])){
 			if (!mysqli_set_charset($connect, "utf8")) {
 				exit("{\"ok\":false,\"error\":\"mysqli_set_charsetの実行に失敗しました。 \\n " . mysqli_error($connect) . " \\n 考えられる理由: \\n 1.指定された設定情報にmysqli_set_charsetの実行権限が無いかも知れません。\"}");
 			}
-			$username = $_POST['fwmusername'];
-			$usermail = $_POST['fwmusermail'];
+			$username = $_POST["fwmusername"];
+			$usermail = $_POST["fwmusermail"];
+			$tableName = "`user`";
+			if("UNICORN" !== PROJECT_NAME) {
+				// 管理機能用のテーブルを生成する
+				$tableName = '`pmusers`';
+				$createtable = "";
+				$createtable .= "CREATE TABLE IF NOT EXISTS ".$tableName." (`id` int(10) NOT NULL AUTO_INCREMENT COMMENT 'pkey', `name` VARCHAR(1024) NOT NULL COMMENT '名前', `mail` VARCHAR(1024) NOT NULL COMMENT 'メールアドレス', `pass` VARCHAR(64) NOT NULL COMMENT 'パスワード(SHA256)', `role` CHAR(1) NOT NULL DEFAULT '1' COMMENT '権限(9=最高権限)', PRIMARY KEY(`id`));\n";
+				$createtable .= "-- Session --\n";
+				$createtable .= "CREATE TABLE IF NOT EXISTS `pmsessions` (`token` VARCHAR(255) NOT NULL COMMENT 'ワンタイムトークン', `created` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'トークン作成日時', PRIMARY KEY(`token`)) ENGINE = MYISAM;\n";
+				$createtable .= "CREATE TABLE IF NOT EXISTS `pmsessiondatas` (`uid` CHAR(32) NOT NULL COMMENT 'user_idから算出したUID', `data` TEXT DEFAULT NULL COMMENT 'jsonシリアライズされたセッションデータ', `modified` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '変更日時', PRIMARY KEY(`uid`)) ENGINE = MYISAM;\n";
+				if (!mysqli_multi_query($connect, $createtable)) {
+					exit("{\"ok\":false,\"error\":\"create文の実行に失敗しました。 \\n " . mysqli_error($connect) . " \\n 考えられる理由: \\n 1.指定された設定情報にcreate tableの実行権限が無いかも知れません。 \\n 2.指定された設定情報にinsertの実行権限が無いかも知れません。\"}");
+				}
+			}
 			$userpassHash = hash("sha256", $_POST['fwmuserpass'], FALSE);
 			// 先ずは既にユーザーレコードが無いかどうか調べる
-			$selectSQL = "SELECT * FROM `user` WHERE `mail` =  '".$usermail."' AND `pass` = '".$userpassHash."'";
+			$selectSQL = "SELECT * FROM ".$tableName." WHERE `mail` =  '".$usermail."' AND `pass` = '".$userpassHash."'";
 			installerlog($selectSQL);
 			$result = mysqli_query($connect, $selectSQL);
 			if (!$result) {
@@ -2914,7 +3105,12 @@ elseif(isset($_GET["a"])){
 			}
 			if(NULL === mysqli_fetch_array($result)){
 				// インサートする
-				$insertSQL = "INSERT INTO `user` (`name`, `mail`, `pass`) VALUES ('".$username."', '".$usermail."', '".$userpassHash."')";
+				if("UNICORN" !== PROJECT_NAME) {
+					$insertSQL = "INSERT INTO ".$tableName." (`name`, `mail`, `pass`, `role`) VALUES ('".$username."', '".$usermail."', '".$userpassHash."', '9')";
+				}
+				else {
+					$insertSQL = "INSERT INTO ".$tableName." (`name`, `mail`, `pass`) VALUES ('".$username."', '".$usermail."', '".$userpassHash."')";
+				}
 				installerlog($insertSQL);
 				if (!mysqli_query($connect, $insertSQL)) {
 					exit("{\"ok\":false,\"error\":\"SQL文の実行に失敗しました。 \\n " . mysqli_error($connect) . " \\n 考えられる理由: \\n 1.指定された設定情報にselectの実行権限が無いかも知れません。 \\n 2.指定された設定情報にupdateの実行権限が無いかも知れません。 \\n 3.指定された設定情報にinsertの実行権限が無いかも知れません。\"}");
@@ -2922,7 +3118,7 @@ elseif(isset($_GET["a"])){
 			}
 			else {
 				// アップデートする
-				$updateSQL = "UPDATE `user` SET `name` = '".$username."', `mail` = '".$usermail."', `pass` = '".$userpassHash."' WHERE `mail` =  '".$usermail."' AND `pass` = '".$userpassHash."'";
+				$updateSQL = "UPDATE ".$tableName." SET `name` = '".$username."', `mail` = '".$usermail."', `pass` = '".$userpassHash."' WHERE `mail` =  '".$usermail."' AND `pass` = '".$userpassHash."'";
 				installerlog($updateSQL);
 				if (!mysqli_query($connect, $updateSQL)) {
 					exit("{\"ok\":false,\"error\":\"SQL文の実行に失敗しました。 \\n " . mysqli_error($connect) . " \\n 考えられる理由: \\n 1.指定された設定情報にselectの実行権限が無いかも知れません。 \\n 2.指定された設定情報にupdateの実行権限が無いかも知れません。 \\n 3.指定された設定情報にinsertの実行権限が無いかも知れません。\"}");
@@ -2934,7 +3130,12 @@ elseif(isset($_GET["a"])){
 		else if(isset($_GET["apply"]) && 9 === (int)$_GET["apply"]) {
 			if(false === is_file($_POST["fwmdocpath"]."/index.php")){
 				// 存在を確認出来ず
-				exit("{\"ok\":false,\"error\":\"指定されたパス「" . $path . "」にフレームワークマネージャーの公開ディレクトリを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+				if("UNICORN" === PROJECT_NAME) {
+					exit("{\"ok\":false,\"error\":\"指定されたパス「" . $path . "」にフレームワークマネージャーの公開ディレクトリを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+				}
+				else {
+					exit("{\"ok\":false,\"error\":\"指定されたパス「" . $path . "」にプロジェクト管理機能の公開ディレクトリを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+				}
 			}
 			exit("{\"ok\":true}");
 		}
@@ -2964,12 +3165,14 @@ elseif(isset($_GET["a"])){
 				// 存在を確認出来ず
 				exit("{\"ok\":false,\"error\":\"指定されたパス「" . $_POST["fwmpath"] . "」にフレームワークを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
 			}
-			$fwmConfXMLPath = $_POST["fwmpath"]."/core/FrameworkManager.config.xml";;
-			if(!is_file($fwmConfXMLPath)){
-				// 存在を確認出来ず
-				exit("{\"ok\":false,\"error\":\"指定されたパス「" . $fwmConfXMLPath . "」にフレームワークを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+			if("UNICORN" === PROJECT_NAME) {
+				$fwmConfXMLPath = $_POST["fwmpath"]."/core/FrameworkManager.config.xml";
+				if(!is_file($fwmConfXMLPath)){
+					// 存在を確認出来ず
+					exit("{\"ok\":false,\"error\":\"指定されたパス「" . $fwmConfXMLPath . "」にフレームワークを見つけられませんでした。\\n正しいパスを指定し治して、「設定」ボタンを押して下さい。\"}");
+				}
+				$fwmConfXML = simplexml_load_file($fwmConfXMLPath);
 			}
-			$fwmConfXML = simplexml_load_file($fwmConfXMLPath);
 
 			if(10 <= filesize(dirname(__FILE__)."/clog")){
 				// clogが10バイト以上あったらコンソール実行にエラーがあったと言う事
@@ -2997,7 +3200,7 @@ elseif(isset($_GET["a"])){
 				$targetLineNum1 = 4;
 				// 5行目、フレームワークパスの特定処理
 				$targetLineNum2 = 5;
-				// $fwmdocpath中のこのファイル上のFrameworkManagerのパス設定を書き換える
+				// $fwmdocpath中のパス設定を書き換える
 				// パスの文字列形式を揃える
 				$tmp1Path = str_replace("//", "/", $frameworkPath."/");
 				$tmp2Path = str_replace("//", "/",$_POST["newfwmdocpath"]."/");
@@ -3050,7 +3253,12 @@ elseif(isset($_GET["a"])){
 				while (($buffer = fgets($handle, 4096)) !== false) {
 					$readLine++;
 					if($targetLineNum1 === $readLine){
-						$file .= "\$fwmpkgName = \"" . $fwmpkgName . "\";" . PHP_EOL;
+						if("UNICORN" === PROJECT_NAME) {
+							$file .= "\$fwmpkgName = \"" . $fwmpkgName . "\";" . PHP_EOL;
+						}
+						else {
+							$file .= "\$projectpkgName = \"" . $fwmpkgName . "\";" . PHP_EOL;
+						}
 					}
 					else if($targetLineNum2 === $readLine) {
 						// 置換処理
@@ -3065,13 +3273,15 @@ elseif(isset($_GET["a"])){
 			}
 
 			// 移動が終わったらベースURLを書き出す
-			$fwmConfXML->FrameworkManager->BASE_URL = array();
-			$fwmConfXML->FrameworkManager->BASE_URL[0] = $_POST["fwmurl"];
-			$fwmConfXML->FrameworkManager->BASE_URL[0]->addAttribute("stage", "local");
-			$fwmConfXML->FrameworkManager->BASE_URL[1] = $_POST["fwmurl"];
-			$fwmConfXML->FrameworkManager->BASE_URL[1]->addAttribute("stage", "test");
-			$fwmConfXML->FrameworkManager->BASE_URL[2] = $_POST["fwmurl"];
-			$fwmConfXML->asXML($fwmConfXMLPath);
+			if("UNICORN" === PROJECT_NAME) {
+				$fwmConfXML->FrameworkManager->BASE_URL = array();
+				$fwmConfXML->FrameworkManager->BASE_URL[0] = $_POST["fwmurl"];
+				$fwmConfXML->FrameworkManager->BASE_URL[0]->addAttribute("stage", "local");
+				$fwmConfXML->FrameworkManager->BASE_URL[1] = $_POST["fwmurl"];
+				$fwmConfXML->FrameworkManager->BASE_URL[1]->addAttribute("stage", "test");
+				$fwmConfXML->FrameworkManager->BASE_URL[2] = $_POST["fwmurl"];
+				$fwmConfXML->asXML($fwmConfXMLPath);
+			}
 
 			// フレームワークマネージャーの移動の正常終了
 			exit(json_encode($res));

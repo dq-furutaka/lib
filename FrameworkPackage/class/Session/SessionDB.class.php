@@ -172,21 +172,26 @@ class SessionDB extends SessionDataDB implements SessionIO {
 	 * @return mixed パースに失敗したらFALSE 成功した場合はstring 固有識別子を返す
 	 */
 	protected static function _tokenToIdentifier($argToken, $argUncheck=FALSE){
+		logging(self::$_cryptKey, 'session');
+		logging(self::$_cryptIV, 'session');
+		logging(self::$_expiredtime, 'session');
 		$token = $argToken;
 		// 暗号化されたトークンの本体を取得
 		$encryptedToken = substr($token, 0, strlen($token)-14);
 		// トークンが発行された日時分秒文字列
 		$tokenExpierd = substr($token, strlen($token)-14, 14);
-		debug('$tokenExpierd=' . $tokenExpierd . '&$encryptedToken=' . $encryptedToken);
+		logging('$tokenExpierd=' . $tokenExpierd, 'session');
+		logging('$encryptedToken=' . $encryptedToken, 'session');
 		// トークンを複合
 		$decryptToken = Utilities::doHexDecryptAES($encryptedToken, self::$_cryptKey, self::$_cryptIV);
+		logging('$decryptToken=' . $decryptToken, 'session');
 		// XXXデフォルトのUUIDはSHA256
 		$identifier = substr($decryptToken, 0, strlen($decryptToken) - 14);
 		// トークンの中に含まれていた、トークンが発行された日時分秒文字列
 		$tokenTRUEExpierd = substr($decryptToken, strlen($decryptToken) - 14, 14);
 
-		debug('tokenIdentifier='.$identifier);
-		debug('$tokenTRUEExpierd=' . $tokenTRUEExpierd . '&$decryptToken=' . $decryptToken);
+		logging('tokenIdentifier='.$identifier, 'session');
+		logging('$tokenTRUEExpierd=' . $tokenTRUEExpierd . '&$decryptToken=' . $decryptToken, 'session');
 		// expierdの偽装チェックはココでしておく
 		if(FALSE === $argUncheck && FALSE === (strlen($tokenExpierd) == 14 && $tokenExpierd == $tokenTRUEExpierd)){
 			// $tokenExpierdと$tokenTRUEExpierdが一致しない=$tokenExpierdが偽装されている！？
@@ -205,11 +210,11 @@ class SessionDB extends SessionDataDB implements SessionIO {
 		$second = substr($tokenTRUEExpierd, 12, 2);
 		$tokenexpiredatetime = (int)Utilities::date('U', $year . '-' . $month . '-'. $day . ' ' . $hour . ':' . $minute . ':' . $second, 'GMT');
 		$expiredatetime = (int)Utilities::modifyDate("-".(string)self::$_expiredtime . 'sec', 'U', NULL, NULL, 'GMT');
-		debug('$tokenTRUEExpierd='.$tokenTRUEExpierd.'&$tokenexpiredatetime=' . $tokenexpiredatetime . '&$expiredatetime=' . $expiredatetime);
+		logging('$tokenTRUEExpierd='.$tokenTRUEExpierd.'&$tokenexpiredatetime=' . $tokenexpiredatetime . '&$expiredatetime=' . $expiredatetime, 'session');
 		if(FALSE === $argUncheck && $tokenexpiredatetime < $expiredatetime){
 			return FALSE;
 		}
-		debug('tokenIdentifier='.$identifier);
+		logging('tokenIdentifier='.$identifier, 'session');
 		return $identifier;
 	}
 
@@ -238,10 +243,13 @@ class SessionDB extends SessionDataDB implements SessionIO {
 					// Cookieが在る場合はCookieからトークンと固有識別子を初期化する
 					$token = $_COOKIE[self::$_tokenKeyName];
 					$identifier = self::_tokenToIdentifier($token);
+					logging('is identifier? '.$identifier, 'session');
 					if(FALSE !== $identifier){
+						logging('is identifier! '.$identifier, 'session');
 						// SESSIONレコードを走査
 						$binds = array(self::$_sessionPKeyName => $token, 'expierddate' => Utilities::modifyDate('-' . (string)self::$_expiredtime . 'sec', 'Y-m-d H:i:s', NULL, NULL, 'GMT'));
 						$Session = ORMapper::getModel(self::$_DBO, self::$_sessionTblName, '`' . self::$_sessionPKeyName . '` = :' . self::$_sessionPKeyName . ' AND `' . self::$_sessionDateKeyName . '` >= :expierddate ORDER BY `' . self::$_sessionDateKeyName . '` DESC limit 1', $binds);
+						logging('is session! '.$Session->{self::$_sessionPKeyName}, 'session');
 						if(strlen($Session->{self::$_sessionPKeyName}) > 0){
 							// tokenとして認める
 							self::$_token = $token;
@@ -251,7 +259,7 @@ class SessionDB extends SessionDataDB implements SessionIO {
 						// identiferだけは認める
 						self::sessionID($identifier);
 					}
-					debug('cookie delete!');
+					logging('cookie delete!', 'session');
 					// 二度処理しない為に削除する
 					unset($_COOKIE[self::$_tokenKeyName]);
 					setcookie(self::$_tokenKeyName, '', time() - 3600);
@@ -264,7 +272,7 @@ class SessionDB extends SessionDataDB implements SessionIO {
 					return TRUE;
 				}
 				// セッションは存在したが、一致特定出来なかった時はエラー終了
-				debug('session expired!');
+				logging('session expired!', 'session');
 				return FALSE;
 			}
 		}
@@ -287,7 +295,8 @@ class SessionDB extends SessionDataDB implements SessionIO {
 		// 新しいtokenを発行する
 		self::$_token = self::_identifierToToken(self::$_identifier);
 		// クッキーを書き換える
-		setcookie($argTokenKey, self::$_token, 0, self::$_path, self::$_domain);
+		setcookie($argTokenKey, self::$_token, 0, self::$_path);
+		//setcookie($argTokenKey, self::$_token, 0, self::$_path, self::$_domain);
 		// SESSHONレコードを更新
 		$binds = array(self::$_sessionPKeyName => self::$_token, 'expierddate' => Utilities::modifyDate('-' . (string)self::$_expiredtime . 'sec', 'Y-m-d H:i:s', NULL, NULL, 'GMT'));
 		$Session = ORMapper::getModel(self::$_DBO, self::$_sessionTblName, '`' . self::$_sessionPKeyName . '` = :' . self::$_sessionPKeyName . ' AND `' . self::$_sessionDateKeyName . '` >= :expierddate ORDER BY `' . self::$_sessionDateKeyName . '` DESC limit 1', $binds);
@@ -301,6 +310,9 @@ class SessionDB extends SessionDataDB implements SessionIO {
 	 * @param string identifier
 	 */
 	public static function sessionID($argIdentifier=NULL){
+		if(FALSE === self::$_initialized){
+			self::_init();
+		}
 		if(NULL === self::$_identifier && NULL === $argIdentifier){
 			// トークンの初期化
 			if(FALSE === self::$_tokenInitialized && FALSE === self::_initializeToken()){
@@ -407,11 +419,12 @@ class SessionDB extends SessionDataDB implements SessionIO {
 				// 該当のSessionDataも削除
 				parent::clear($identifier);
 			}
-			debug('cookie clear!');
+			logging('cookie clear!', 'session');
 			// 二度処理しない為に削除する
 			unset($_COOKIE[self::$_tokenKeyName]);
 			setcookie(self::$_tokenKeyName, '', time() - 3600);
 		}
+		self::$_identifier = NULL;
 		return TRUE;
 	}
 }

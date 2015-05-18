@@ -18,6 +18,18 @@ abstract class GenericModelBase {
 	public $tableName = NULL;
 
 	/**
+	 * 対象テーブルコメント(MySQL用)
+	 * @var string
+	 */
+	public $tableComment = NULL;
+
+	/**
+	 * 対象テーブルエンジン(MySQL用)
+	 * @var string
+	 */
+	public $tabletableEngine = NULL;
+
+	/**
 	 * クラス名
 	 * @var string
 	 */
@@ -53,6 +65,11 @@ abstract class GenericModelBase {
 	public $describes = array();
 
 	/**
+	 * インデックス定義情報一覧
+	 */
+	public $indexes = array();
+
+	/**
 	 * レコードの読み込みを行ったかどうか
 	*/
 	public $loaded = FALSE;
@@ -86,11 +103,19 @@ abstract class GenericModelBase {
 	public function load($argExtractionCondition=NULL, $argBinds=NULL){
 		// 抽出条件が指定されている場合はそれに準じる
 		if(NULL !== $argExtractionCondition){
-			if(TRUE === is_array($argExtractionCondition)){
-				// 配列なら抽出結果をセットされいる
+			if(TRUE === is_array($argExtractionCondition) && !isset($argExtractionCondition["JOIN"])){
+				// 配列なら抽出結果がセットされている
 				$this->init($argExtractionCondition);
 			}
 			else{
+				$join = "";
+				if(TRUE === is_array($argExtractionCondition)){
+					if(isset($argExtractionCondition["JOIN"]) && isset($argExtractionCondition["QUERY"])){
+						// JOIN情報を分解
+						$join = $argExtractionCondition["JOIN"]." ";
+						$argExtractionCondition = $argExtractionCondition["QUERY"];
+					}
+				}
 				if(FALSE !== strpos($argExtractionCondition,"SELECT") && strpos($argExtractionCondition,"SELECT") <= 1){
 					// SELECT文での指定
 					$response = $this->_DBO->execute($argExtractionCondition . " ");
@@ -100,20 +125,20 @@ abstract class GenericModelBase {
 					foreach($this->describes as $key => $val){
 						if("date" === $val["type"] && TRUE === ("postgres" === $this->_DBO->DBType || "oracle" === $this->_DBO->DBType)){
 							// PostgresとOracleはTO_CHARを使って文字列を所定のフォーマットで取得する
-							$fields[] = "TO_CHAR(".$key.", 'yyyy-mm-dd hh24:mi:ss')";
+							$fields[] = "TO_CHAR(`" . strtolower($this->tableName) . "`.`" . $key."`, 'yyyy-mm-dd hh24:mi:ss')";
 						}else{
-							$fields[] = $key;
+							$fields[] = "`" . strtolower($this->tableName) . "`.`" . $key . "`";
 						}
 					}
-					$field = '`' . implode("`,`", $fields) . '`';
+					$field = implode(", ", $fields);
 					// 抽出条件が何なのか
 					// WHERE句での指定
 					if(FALSE !== strpos($argExtractionCondition,"WHERE") && strpos($argExtractionCondition,"WHERE") <= 1){
-						$response = $this->_DBO->execute("SELECT " . $field. " FROM `" . strtolower($this->tableName) . "` " . $argExtractionCondition . " ", $argBinds);
+						$response = $this->_DBO->execute("SELECT " . $field. " FROM `" . strtolower($this->tableName) . "` " . $join . $argExtractionCondition . " ", $argBinds);
 					}
 					elseif(FALSE !== strpos($argExtractionCondition,"=")){
 						// 条件のみでの指定
-						$response = $this->_DBO->execute("SELECT " . $field. " FROM `" . strtolower($this->tableName) . "` WHERE " . $argExtractionCondition . " ", $argBinds);
+						$response = $this->_DBO->execute("SELECT " . $field. " FROM `" . strtolower($this->tableName) . "` " . $join . " WHERE " . $argExtractionCondition . " ", $argBinds);
 					}else{
 						// Pkey指定として扱う
 						$binds = array();
@@ -329,7 +354,7 @@ abstract class GenericModelBase {
 
 			// MySQLのauto_increment用処理
 			if(isset($lastInsertIdEnabled) && TRUE === $lastInsertIdEnabled){
-				$response = $this->_DBO->execute("SELECT LAST_INSERT_ID() AS new_id FROM " . strtolower($this->tableName) . " LIMIT 1");
+				$response = $this->_DBO->execute("SELECT LAST_INSERT_ID() AS new_id FROM `" . strtolower($this->tableName) . "` LIMIT 1");
 				if(FALSE === $response){
 					throw new Exception("");
 				}else{
@@ -571,7 +596,7 @@ abstract class GenericModelBase {
 		}
 		elseif("int" === $this->describes[$argKey]["type"] && FALSE === is_numeric($argValue)){
 			// 数値型チェック
-			throw new Exception("TYPE MISSMATCH INT");
+			throw new Exception("TYPE MISSMATCH INT".$argKey."&".$argValue);
 		}
 		return TRUE;
 	}

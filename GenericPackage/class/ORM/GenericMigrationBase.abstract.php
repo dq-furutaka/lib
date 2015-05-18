@@ -5,6 +5,7 @@ abstract class GenericMigrationBase {
 	public static $migrationHash = '';
 	public $tableName = '';
 	public $describes = array();
+	public $indexes = array();
 
 	private function _getFieldPropatyQuery($argDescribe){
 		// create文を生成する
@@ -71,6 +72,32 @@ abstract class GenericMigrationBase {
 		return array('fieldDef'=>$fieldDef, 'pkeyDef'=>$pkeyDef);
 	}
 
+	private function _getIndexQueries($argIndex){
+		$indexQueries = array();
+		if(NULL !== $argIndex && is_array($argIndex) && 0 < count($argIndex)){
+			foreach($argIndex as $keyname => $propaty){
+				if(isset($propaty['alter']) && TRUE === ('MODIFY' === strtoupper($propaty['alter']) || 'DROP' === strtoupper($propaty['alter']))){
+					$indexQueries[] = 'DROP INDEX `' . $keyname . '` ON `' . $this->tableName . '`';
+				}
+				if(TRUE !== (isset($propaty['alter']) && 'DROP' === strtoupper($propaty['alter']))){
+					$sql = 'CREATE INDEX `' . $keyname . '` ON `' . $this->tableName . '`(';
+					for ($colIdx=0; $colIdx < count($propaty["Colums"]); $colIdx++){
+						if (0 < $colIdx){
+							$sql .= ', ';
+						}
+						$sql .= '`' . $propaty['Colums'][$colIdx] . '`';
+					}
+					$sql .= ') ';
+					if(isset($propaty['Index_comment']) && 0 < strlen($propaty['Index_comment'])){
+						$sql .= ' COMMENT \'' . $propaty['Index_comment'] . '\'';
+					}
+					$indexQueries[] = $sql;
+				}
+			}
+		}
+		return $indexQueries;
+	}
+
 	/**
 	 * createのマイグレーションを適用する
 	 * @param instance $argDBO
@@ -78,13 +105,27 @@ abstract class GenericMigrationBase {
 	 */
 	public function create($argDBO){
 		$sql = '';
-		$fielPropatyQuerys = $this->_getFieldPropatyQuery($this->describes);
-		$pkeyDef = $fielPropatyQuerys['pkeyDef'];
-		$fieldDef = $fielPropatyQuerys['fieldDef'];
+		$fielPropatyQueries = $this->_getFieldPropatyQuery($this->describes);
+		$pkeyDef = $fielPropatyQueries['pkeyDef'];
+		$fieldDef = $fielPropatyQueries['fieldDef'];
 		if(strlen($fieldDef) > 0){
 			$sql = 'CREATE TABLE IF NOT EXISTS `' . $this->tableName . '` (' . $fieldDef . $pkeyDef . ')';
+			if(isset($this->tableEngine) && 0 < strlen($this->tableEngine)){
+				$sql .= ' ENGINE='.$this->tableEngine;
+			}
+			if(isset($this->tableComment)){
+				$sql .= ' COMMENT \''.$this->tableComment.'\'';
+			}
 			debug('migration create sql='.$sql);
 			$argDBO->execute($sql);
+			$argDBO->commit();
+		}
+		// インデックスを適用
+		$indexQueries = $this->_getIndexQueries($this->indexes);
+		for($idx=0; $idx < count($indexQueries); $idx++){
+			$argDBO->execute($indexQueries[$idx]);
+		}
+		if(0 < $idx){
 			$argDBO->commit();
 		}
 		return TRUE;
@@ -107,17 +148,34 @@ abstract class GenericMigrationBase {
 	 * @param instance $argDBO
 	 * @return boolean
 	 */
-	public function alter($argDBO, $argDescribes){
+	public function alter($argDBO, $argDescribes, $argIndex=NULL){
 		$executed = FALSE;
 		// ALTERは一行づつ処理
 		foreach($argDescribes as $field => $propaty){
 			$sql = '';
-			if('DROP' === $propaty['alter']){
+			if('__Comment__' === $field){
+				$comment = $this->tableComment;
+				if(isset($propaty['before'])){
+					$comment = $propaty['before'];
+				}
+				$sql = 'ALTER TABLE `' . $this->tableName . '` Comment \'' . $comment . '\'';
+			}
+			elseif('__Engine__' === $field){
+				$engine = $this->tableEngine;
+				if(isset($propaty['before'])){
+					$engine = $propaty['before'];
+				}
+				$sql = 'ALTER TABLE `' . $this->tableName . '` Engine ' . $engine;
+			}
+			elseif('DROP' === $propaty['alter']){
 				$sql = 'ALTER TABLE `' . $this->tableName . '` DROP COLUMN `' . $field . '`';
 			}
+			elseif('RENAME' === $propaty['alter'] && isset($propaty['before'])){
+				$sql = 'ALTER TABLE `' . $this->tableName . '` RENAME COLUMN `' . $field . '` TO `' . $propaty['before'] .'`';
+			}
 			else{
-				$fielPropatyQuerys = $this->_getFieldPropatyQuery(array($field => $propaty));
-				$fieldDef = $fielPropatyQuerys['fieldDef'];
+				$fielPropatyQueries = $this->_getFieldPropatyQuery(array($field => $propaty));
+				$fieldDef = $fielPropatyQueries['fieldDef'];
 				if(strlen($fieldDef) > 0){
 					$sql = 'ALTER TABLE `' . $this->tableName . '` ' . $propaty['alter'] . ' COLUMN ' . $fieldDef;
 					if(isset($propaty['first']) && TRUE === $propaty['first']){
@@ -127,6 +185,7 @@ abstract class GenericMigrationBase {
 						$sql .= ' AFTER `'.$propaty['after'].'`';
 					}
 				}
+				// XXX プライマリーキーのALTERがねぇ！！！？ ・・・後で追加しますorz
 			}
 			if(strlen($sql) > 0){
 				try {
@@ -144,6 +203,13 @@ abstract class GenericMigrationBase {
 					// XXX それでもダメならException！
 				}
 			}
+		}
+			// インデックスを適用
+		$indexQueries = $this->_getIndexQueries($argIndex);
+		for($idx=0; $idx < count($indexQueries); $idx++){
+			debug('migration alter index='.$indexQueries[$idx]);
+			$argDBO->execute($indexQueries[$idx]);
+			$executed = TRUE;
 		}
 		if(TRUE === $executed){
 			$argDBO->commit();

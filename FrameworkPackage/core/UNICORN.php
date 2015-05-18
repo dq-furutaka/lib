@@ -4,7 +4,7 @@
  * UNICORN Framework
 *
 * @author saimushi
-* @website http://saimushi.github.io/UNICORN/
+* @website http://unicorn-project.github.io
 * @copyright (C) 2014 saimushi All Rights Reserved.
 */
 
@@ -718,19 +718,19 @@ function loadConfig($argConfigPath){
 						for($attrCnt=0;count($val2)>$attrCnt;$attrCnt++){
 							if(isset($configure->{$key}->{$key2}[$attrCnt]->attributes()->stage)){
 								$stage = $configure->{$key}->{$key2}[$attrCnt]->attributes()->stage;
-								if('local' == $stage && TRUE === $localFlag){
+								if('local' == $stage && 1 === (int)$localFlag){
 									$skip = FALSE;
 									BREAK;
 								}
-								elseif('dev' == $stage && TRUE === $devFlag){
+								elseif('dev' == $stage && 1 === (int)$devFlag){
 									$skip = FALSE;
 									BREAK;
 								}
-								elseif('test' == $stage && TRUE === $testFlag){
+								elseif('test' == $stage && 1 === (int)$testFlag){
 									$skip = FALSE;
 									BREAK;
 								}
-								elseif('staging' == $stage && TRUE === $stagingFlag){
+								elseif('staging' == $stage && 1 === (int)$stagingFlag){
 									$skip = FALSE;
 									BREAK;
 								}
@@ -785,19 +785,19 @@ function loadConfig($argConfigPath){
 					for($attrCnt=0;count($val)>$attrCnt;$attrCnt++){
 						if(isset($configure->{$key}[$attrCnt]->attributes()->stage)){
 							$stage = $configure->{$key}[$attrCnt]->attributes()->stage;
-							if('local' == $stage && TRUE === $localFlag){
+							if('local' == $stage && 1 === (int)$localFlag){
 								$skip = FALSE;
 								BREAK;
 							}
-							elseif('dev' == $stage && TRUE === $devFlag){
+							elseif('dev' == $stage && 1 === (int)$devFlag){
 								$skip = FALSE;
 								BREAK;
 							}
-							elseif('test' == $stage && TRUE === $testFlag){
+							elseif('test' == $stage && 1 === (int)$testFlag){
 								$skip = FALSE;
 								BREAK;
 							}
-							elseif('staging' == $stage && TRUE === $stagingFlag){
+							elseif('staging' == $stage && 1 === (int)$stagingFlag){
 								$skip = FALSE;
 								BREAK;
 							}
@@ -1025,7 +1025,7 @@ function _initFramework($argment = NULL){
 						$pkgConfXML = array();
 					}
 					// XXX 新しいパッケージは常に配列の先頭に！
-					array_unshift($pkgConfXML, array('time' => filemtime($pkgConfXMLPath), 'dom' => simplexml_load_file($pkgConfXMLPath, NULL, LIBXML_NOCDATA)));
+					array_unshift($pkgConfXML, array('time' => filemtime($pkgConfXMLPath), 'dom' => simplexml_load_string(file_get_contents($pkgConfXMLPath), NULL, LIBXML_NOCDATA)));
 					// defaulのauto節を処理する
 					if(count($pkgConfXML[0]['dom']->default->auto) > 0){
 						foreach($pkgConfXML[0]['dom']->default->auto->children() as $autoLoadModule){
@@ -1081,7 +1081,7 @@ eval('function init' . $corefilename . '($argment = NULL){ return _initFramework
 /**
  * フレームワーク内のエラー処理
 */
-function _systemError($argMsg, $argStatusCode=500, $argHtml=''){
+function _systemError($argMsg, $argStatusCode=500, $argHtml='', $argTrace=NULL){
 	$corefilename = strtoupper(substr(basename(__FILE__), 0, strpos(basename(__FILE__), '.')));
 	$errorHtml = $argHtml;
 	// ココを通るのは相当なイレギュラー
@@ -1099,18 +1099,39 @@ function _systemError($argMsg, $argStatusCode=500, $argHtml=''){
 	// 開発状態のみエラー表示をする
 	if(isTest()) {
 		if(strlen($errorHtml) > 0){
-			$errorTitle = '<h2>Internal Server Error</h2>';
-			$errorTitle .= '<h3>'.$argMsg.'</h3>';
-			$errorTitle .= '<h4>Please check exception\'s log</h4>';
+			$errorName = 'Internal Server Error';
+			if (400 === (int)$argStatusCode){
+				$errorName = 'Bad Request';
+			}
+			if (401 === (int)$argStatusCode){
+				$errorName = 'Unauthorized';
+			}
+			if (403 === (int)$argStatusCode){
+				$errorName = 'Forbidden';
+			}
+			if (404 === (int)$argStatusCode){
+				$errorName = 'Not Found';
+			}
+			if (503 === (int)$argStatusCode){
+				$errorName = 'Service Unavailable';
+			}
+			$errorTitle = '<h1>'.$argStatusCode.' '.$errorName.'</h1>';
+			$errorTitle .= '<h2>'.$argMsg.'</h2>';
+			$errorTitle .= '<h3>Please check exception\'s log</h3>';
+			$errorHtml = str_replace('%error_code%', $argStatusCode, $errorHtml);
+			$errorHtml = str_replace('%error_name%', $errorName, $errorHtml);
 			$errorHtml = str_replace('%error_title%', $errorTitle, $errorHtml);
 			// バックトレースの0番目をコードとして表示
 			$errorMsg = '<p><strong>error code:%error_file% - %error_line%行目</strong></p>'.PHP_EOL;
-			$errorMsg .= '<pre class="error_code brush: php first-line:%error_code_startline% highlight:[%error_code_highlightline%]">%error_code%</pre>'.PHP_EOL;
+			$errorMsg .= '<pre class="prettyprint lang-html linenums error_code brush: php first-line:%error_code_startline% highlight:[%error_code_highlightline%]">%error_code%</pre>'.PHP_EOL;
 			$errorMsg .= '<p><strong>error ditail:</strong></p>'.PHP_EOL;
 			$errorMsg .= '<pre class="error_detail">%error_detail%</pre>'.PHP_EOL;
 			$errorCode = '';
 			$errorDetail = '';
-			$tracecs = debug_backtrace();
+			$tracecs = $argTrace;
+			if (NULL === $tracecs){
+				$tracecs = debug_backtrace();
+			}
 			if(isset($tracecs[0])){
 				$errorFileInfo = $tracecs[0];
 				if(isset($errorFileInfo['file']) && isset($errorFileInfo['line']) && is_file($errorFileInfo['file']) && is_numeric($errorFileInfo['line'])){
@@ -1144,10 +1165,10 @@ function _systemError($argMsg, $argStatusCode=500, $argHtml=''){
 			$errorMsg = str_replace('%error_line%', '', $errorMsg);
 			$errorMsg = str_replace('%error_code_startline%', '', $errorMsg);
 			$errorMsg = str_replace('%error_code_highlightline%', '', $errorMsg);
-			$errorMsg = str_replace('%error_code%', $errorCode, $errorMsg);
+			$errorMsg = str_replace('%error_code%', htmlentities($errorCode, ENT_QUOTES, mb_internal_encoding()), $errorMsg);
 			// PHPUnitTestではdebugtraceを取らない・・・(traceが長すぎてパンクする・・・)
 			if(!class_exists('PHPUnit_Framework_TestCase', FALSE)){
-				$errorDetail = str_replace(array(PHP_TAB, ' '), array('&nbsp;&nbsp;', '&nbsp;'), htmlspecialchars(var_export(debug_backtrace(), TRUE)));
+				$errorDetail = str_replace(array(PHP_TAB, ' '), array('&nbsp;&nbsp;', '&nbsp;'), htmlspecialchars(var_export($tracecs, TRUE)));
 			}
 			$errorMsg = str_replace('%error_detail%', $errorDetail, $errorMsg);
 			// メッセージをディスパッチ
@@ -1163,17 +1184,36 @@ function _systemError($argMsg, $argStatusCode=500, $argHtml=''){
 		}
 	}
 	else if(strlen($errorHtml) > 0){
+		$errorName = 'Internal Server Error';
+		if (400 === (int)$argStatusCode){
+			$errorName = 'Bad Request';
+		}
+		if (401 === (int)$argStatusCode){
+			$errorName = 'Unauthorized';
+		}
+		if (403 === (int)$argStatusCode){
+			$errorName = 'Forbidden';
+		}
+		if (404 === (int)$argStatusCode){
+			$errorName = 'Not Found';
+		}
+		if (503 === (int)$argStatusCode){
+			$errorName = 'Service Unavailable';
+		}
 		// XXX 本番環境では詳細なエラーの画面表示はしない！(exception_logには吐かれます)
-		$errorTitle = '<h2>Internal Server Error</h2>';
-		$errorTitle .= '<h3>&nbsp;</h3>';
-		$errorTitle .= '<h4>Please check exception\'s log</h4>';
+		$errorTitle = '<h1>'.$argStatusCode.' '.$errorName.'</h1>';
+		$errorTitle .= '<h2>&nbsp;</h2>';
+		$errorTitle .= '<h3>Please check exception\'s log</h3>';
+		$errorHtml = str_replace('%error_code%', $argStatusCode, $errorHtml);
+		$errorHtml = str_replace('%error_name%', $errorName, $errorHtml);
 		$errorHtml = str_replace('%error_title%', $errorTitle, $errorHtml);
 		$errorHtml = str_replace('%error_msg%', '', $errorHtml);
 		echo $errorHtml;
 	}
 	// PHPUnitTestではdebugtraceを取らない・・・(traceが長すぎてパンクする・・・)
 	if(!class_exists('PHPUnit_Framework_TestCase', FALSE)){
-		logging($argMsg.PATH_SEPARATOR.var_export(debug_backtrace(),TRUE),'exception');
+		logging($argMsg, 'exception');
+		logging($argMsg.PATH_SEPARATOR.var_export(debug_backtrace(),TRUE), 'backtrace');
 	}
 	exit();
 }
@@ -1426,13 +1466,8 @@ function logging($arglog, $argLogName = NULL, $argConsolEchoFlag = FALSE){
 	@file_put_contents($logpath.$argLogName.'_'.$phour.'.log', $logstr.PHP_EOL, FILE_APPEND);
 
 	// $debugFlagが有効だったらdebugログに必ず出力
-	if(isset($debugFlag) && 1 === (int)$debugFlag && isset($_SERVER['REQUEST_URI']) && 'debug' != $argLogName){
+	if('exception' != $argLogName && 'backtrace' != $argLogName && 'migration' != $argLogName && isset($debugFlag) && 1 === (int)$debugFlag && isset($_SERVER['REQUEST_URI']) && 'debug' != $argLogName){
 		debug($arglog);
-	}
-
-	// XXX consolは画面に出力
-	if(TRUE === $argConsolEchoFlag && isset($debugFlag) && TRUE == $debugFlag && !isset($_SERVER['REQUEST_URI'])){
-		echo $logstr.PHP_EOL;
 	}
 
 	$loggingLineNum++;
@@ -1446,7 +1481,7 @@ function debug($arglog){
 		$debugFlag = Configure::DEBUG_ENABLED;
 	}
 	if(isset($debugFlag) && 1 === (int)$debugFlag){
-		logging($arglog, 'debug',TRUE);
+		logging($arglog, 'debug', TRUE);
 	}
 }
 
@@ -1483,11 +1518,17 @@ define('CHAKE_STAGE_RELEASE', 'release');
 function getStage($argHost=NULL){
 	static $stage = NULL;
 	if(NULL === $stage){
-		$host = $_SERVER['SERVER_NAME'];
+		$host = NULL;
+		if(isset($_SERVER['SERVER_NAME'])){
+			$host = $_SERVER['SERVER_NAME'];
+		}
 		if(NULL !== $argHost){
 			$host = $argHost;
 		}
 		$stage = CHAKE_STAGE_RELEASE;
+		if(NULL === $host){
+			$stage = CHAKE_STAGE_TEST;
+		}
 		if(FALSE !== strpos($host, 'test.')){
 			$stage = CHAKE_STAGE_TEST;
 		}
@@ -1505,6 +1546,9 @@ function getStage($argHost=NULL){
 		}
 		if(FALSE !== strpos($host, 'development.')){
 			$stage = CHAKE_STAGE_DEV;
+		}
+		if(FALSE !== strpos($host, 'localhost')){
+			$stage = CHAKE_STAGE_LOCAL;
 		}
 		if(FALSE !== strpos($host, 'localhost')){
 			$stage = CHAKE_STAGE_LOCAL;
@@ -1536,11 +1580,14 @@ function checkStage($argStage, $argHost=NULL){
  */
 function isTest($argStagingEnabled=FALSE, $argProjectName=NULL, $argHost=NULL){
 	$isTest = FALSE;
-	$host = $_SERVER['SERVER_NAME'];
+	$host = NULL;
+	if(isset($_SERVER['SERVER_NAME'])){
+		$host = $_SERVER['SERVER_NAME'];
+	}
 	if(NULL !== $argHost){
 		$host = $argHost;
 	}
-	if(1 === getAutoStageCheckEnabled($argProjectName) && FALSE === checkStage(CHAKE_STAGE_RELEASE, $host)){
+	if(NULL !== $host && 1 === getAutoStageCheckEnabled($argProjectName) && FALSE === checkStage(CHAKE_STAGE_RELEASE, $host)){
 		// ステージング環境をテスト環境とみなすかどうか
 		if(FALSE === $argStagingEnabled){
 			// みなすので、テスト確定
@@ -1562,6 +1609,7 @@ function isTest($argStagingEnabled=FALSE, $argProjectName=NULL, $argHost=NULL){
 			// ステージング環境かどうか
 			elseif(0 === getStagingEnabled($argProjectName, $host)){
 				// ステージング環境をテスト環境とみなさないので、ステージング環境以外なのでテスト環境であると返却する
+				echo 'is!!!!';
 				$isTest = TRUE;
 			}
 		}
@@ -1604,17 +1652,21 @@ function getAutoStageCheckEnabled($argProjectName=NULL){
 				$autoStagecheckEnabled = 1;
 			}
 		}
-		if(NULL === $argProjectName){
+// 		if(NULL === $argProjectName){
 			// 一応$_SERVERを探す
 			if(isset($_SERVER['autostagecheck']) && 1 === (int)strtolower($_SERVER['autostagecheck'])){
 				// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
 				$autoStagecheckEnabled = 1;
 			}
+			else if(isset($_SERVER['autostagecheck'])){
+				// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
+				$autoStagecheckEnabled = 0;
+			}
 			// XXX Fuel向け拡張
 			if(isset($_SERVER['FUEL_ENV']) && 'local' === strtolower($_SERVER['FUEL_ENV'])){
 				$autoStagecheckEnabled = 1;
 			}
-		}
+			// 		}
 		if(NULL === $autoStagecheckEnabled){
 			// フラグ設定が見つからなかったのでdisabledで設定
 			$autoStagecheckEnabled = 0;
@@ -1669,6 +1721,9 @@ function getLocalEnabled($argProjectName=NULL, $argHost=NULL){
 		if(isset($_SERVER['workspace']) && 'local' === strtolower($_SERVER['workspace'])){
 			// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
 			$localEnabled = 1;
+		}
+		else if(isset($_SERVER['workspace'])){
+			$localEnabled = 0;
 		}
 		// XXX Fuel向け拡張
 		if(isset($_SERVER['FUEL_ENV']) && 'local' === strtolower($_SERVER['FUEL_ENV'])){
@@ -1733,9 +1788,12 @@ function getDevelopmentEnabled($argProjectName=NULL, $argHost=NULL){
 			}
 		}
 		// 一応$_SERVERを探す
-		if(isset($_SERVER['workspace']) && TRUE === ('development' === strtolower($_SERVER['workspace']) && 'dev' === strtolower($_SERVER['workspace']))){
+		if(isset($_SERVER['workspace']) && TRUE === ('development' === strtolower($_SERVER['workspace']) || 'dev' === strtolower($_SERVER['workspace']))){
 			// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
 			$devlopmentEnabled = 1;
+		}
+		else if (isset($_SERVER['workspace'])){
+			$devlopmentEnabled = 0;
 		}
 		// XXX Fuel向け拡張
 		if(isset($_SERVER['FUEL_ENV']) && TRUE === ('development' === strtolower($_SERVER['FUEL_ENV']) || 'dev' === strtolower($_SERVER['FUEL_ENV']))){
@@ -1795,6 +1853,9 @@ function getTestEnabled($argProjectName=NULL, $argHost=NULL){
 			// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
 			$testEnabled = 1;
 		}
+		else if (isset($_SERVER['workspace'])){
+			$testEnabled = 0;
+		}
 		// XXX Fuel向け拡張
 		if(isset($_SERVER['FUEL_ENV']) && 'test' === strtolower($_SERVER['FUEL_ENV'])){
 			$testEnabled = 1;
@@ -1853,6 +1914,9 @@ function getStagingEnabled($argProjectName=NULL, $argHost=NULL){
 			// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
 			$stagingEnabled = 1;
 		}
+		else if (isset($_SERVER['workspace'])){
+			$stagingEnabled = 0;
+		}
 		// XXX Fuel向け拡張
 		if(isset($_SERVER['FUEL_ENV']) && TRUE === ('staging' === strtolower($_SERVER['FUEL_ENV']) || 'stage' === strtolower($_SERVER['FUEL_ENV']))){
 			$stagingEnabled = 1;
@@ -1909,6 +1973,9 @@ function getDebugEnabled($argProjectName=NULL, $argHost=NULL){
 			if(isset($_SERVER['debug_mode']) && 1 === (int)$_SERVER['debug_mode']){
 				// $_SERVERが最強 $_SERVERがあれば$_SERVERに必ず従う
 				$debugEnabled = 1;
+			}
+			else if (isset($_SERVER['debug_mode'])){
+				$debugEnabled = 0;
 			}
 			else if(isset($_SERVER['debugmode']) && 1 === (int)$_SERVER['debugmode']){
 				$debugEnabled = 1;
@@ -1972,6 +2039,9 @@ function getErrorReportEnabled($argProjectName=NULL){
 		else if(isset($_SERVER['errorreport']) && 1 === (int)$_SERVER['errorreport']){
 			$errorReportEnabled = 1;
 		}
+		else if(isset($_SERVER['error_report']) || isset($_SERVER['errorreport'])){
+			$errorReportEnabled = 0;
+		}
 		if(NULL === $errorReportEnabled){
 			// フラグ設定が見つからなかったのでdisabledで設定
 			$errorReportEnabled = 0;
@@ -2019,6 +2089,9 @@ function getAutoGenerateEnabled($argProjectName=NULL){
 		if(isset($_SERVER['autogenerate']) && 1 === (int)$_SERVER['autogenerate']){
 			// ENVが最強 ENVがあればENVに必ず従う
 			$autoGenerateEnabled = TRUE;
+		}
+		else if(isset($_SERVER['autogenerate'])){
+			$autoGenerateEnabled = FALSE;
 		}
 		if(NULL === $autoGenerateEnabled){
 			// フラグ設定が見つからなかったのでdisabledで設定
@@ -2068,6 +2141,9 @@ function getAutoMigrationEnabled($argProjectName=NULL){
 		if(isset($_SERVER['automigration']) && 1 === (int)$_SERVER['automigration']){
 			// ENVが最強 ENVがあればENVに必ず従う
 			$autoMigrationEnabled = TRUE;
+		}
+		else if(isset($_SERVER['automigration'])){
+			$autoMigrationEnabled = FALSE;
 		}
 		if(NULL === $autoMigrationEnabled){
 			// フラグ設定が見つからなかったのでdisabledで設定
@@ -2217,13 +2293,11 @@ function getConfig($argKey, $argConfigName=''){
 	}
 	if(!isset($values[$argConfigName][$argKey])){
 		if(class_exists('Configure') && TRUE === defined('Configure::'.$argKey)){
-			// 定義から暗号化キーを設定
 			$value = Configure::constant($argKey);
 		}
 		if(defined('PROJECT_NAME') && strlen(PROJECT_NAME) > 0 && class_exists(PROJECT_NAME . 'Configure')){
 			$ProjectConfigure = PROJECT_NAME . 'Configure';
 			if(TRUE === defined($ProjectConfigure.'::'.$argKey)){
-				// 定義からセッションDBの接続情報を特定
 				$value = $ProjectConfigure::constant($argKey);
 			}
 		}
@@ -2233,14 +2307,12 @@ function getConfig($argKey, $argConfigName=''){
 		if('' !== $argConfigName && strlen($argConfigName) > 0 && class_exists($argConfigName . 'Configure')){
 			$ArgConfigure = $argConfigName . 'Configure';
 			if(TRUE === defined($ArgConfigure.'::'.$argKey)){
-				// 定義からセッションDBの接続情報を特定
 				$value = $ArgConfigure::constant($argKey);
 			}
 		}
 		if('' !== $argConfigName && strlen($argConfigName) > 0 && class_exists($argConfigName)){
 			$ArgConfigure = $argConfigName;
 			if(TRUE === defined($ArgConfigure.'::'.$argKey)){
-				// 定義からセッションDBの接続情報を特定
 				$value = $ArgConfigure::constant($argKey);
 			}
 		}
@@ -2248,14 +2320,12 @@ function getConfig($argKey, $argConfigName=''){
 		if('' !== $argConfigName && strlen($argConfigName) > 0 && class_exists($argConfigName . 'Configure')){
 			$ArgConfigure = $argConfigName . 'Configure';
 			if(TRUE === defined($ArgConfigure.'::'.$argKey)){
-				// 定義からセッションDBの接続情報を特定
 				$value = $ArgConfigure::constant($argKey);
 			}
 		}
 		if('' !== $argConfigName && strlen($argConfigName) > 0 && class_exists($argConfigName)){
 			$ArgConfigure = $argConfigName;
 			if(TRUE === defined($ArgConfigure.'::'.$argKey)){
-				// 定義からセッションDBの接続情報を特定
 				$value = $ArgConfigure::constant($argKey);
 			}
 		}
@@ -2272,7 +2342,6 @@ function getConfig($argKey, $argConfigName=''){
 
 
 /*------------------------------ 以下手続き型処理 ココから ------------------------------*/
-
 
 // output buffaringを開始する
 ob_start('_callbackAndFinalize');
@@ -2356,19 +2425,19 @@ if(TRUE === $_consoled){
 				// インストールを始めるにはパラメータが足らないエラー
 				echo ' (!)エラー : installerの公開ディレクトリ または installerの公開URL を指定して下さい' . PHP_EOL;
 				echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
-				echo PHP_TAB . ' 例) php UNICORN NT-D /home/user/unicorn/htdocs http://mydomian.com/unicorn/' . PHP_EOL;
+				echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs http://mydomian.com/unicorn/' . PHP_EOL;
 			}
 			else{
 				// バリデーションチェック
 				if (!is_dir($_SERVER['argv'][2])) {
 					echo ' (!)エラー : installerの公開ディレクトリには、存在するディレクトリを指定して下さい' . PHP_EOL;
 					echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
-					echo PHP_TAB . ' 例) php UNICORN NT-D /home/user/unicorn/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+					echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
 				}
 				elseif(FALSE === strpos($_SERVER['argv'][3], 'http')){
 					echo ' (!)エラー : installerの公開URLは、「http」から指定して下さい'.PHP_EOL;
 					echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
-					echo PHP_TAB . ' 例) php UNICORN NT-D /home/user/unicorn/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+					echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
 				}
 				else{
 					// installer.phpをコピー

@@ -2,7 +2,7 @@
 
 /**
  * ADODBを利用したDBクラス
- * 
+ *
  * Singletonパターン実装
  * @see <a href="http://adodb.sourceforge.net/">ADOdb</a>
  */
@@ -168,6 +168,7 @@ class GenericDBO {
 					$newBinds = array();
 					$pattern = "/:([a-zA-Z0-9\_\-]+?)\s/";
 					$matches = NULL;
+					$argQuery = " ".$argQuery." ";
 					while(1 === preg_match($pattern, $argQuery, $matches)){
 						$newBinds[] = $argBinds[$matches[1]];
 						$argQuery = preg_replace($pattern, "? ", $argQuery, 1);
@@ -187,6 +188,7 @@ class GenericDBO {
 			// 新ADODB用の対応
 			$argBinds = FALSE;
 		}
+		logging($argQuery . PHP_EOL . var_export($argBinds, TRUE), "query");
 		$response = self::$_DBInstance[$instanceIndex]->Execute($argQuery, $argBinds);
 		$responseBool = FALSE;
 		if(FALSE !== $response){
@@ -311,9 +313,11 @@ class GenericDBO {
 						}
 						$matches = NULL;
 						preg_match("/\(([0-9\,]+)\)/", $baseDescribes[$baseDescribeNum]["Type"], $matches);
-						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = $matches[1];
+						if (isset($matches[1])){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = $matches[1];
+						}
 					}
-					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "float") || FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "bigint")){
+					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "float")){
 						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["type"] = "float";
 						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = FALSE;
 						if(TRUE === $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL === $baseDescribes[$baseDescribeNum]["Default"]){
@@ -324,7 +328,9 @@ class GenericDBO {
 						}
 						$matches = NULL;
 						preg_match("/\(([0-9\,]+)\)/", $baseDescribes[$baseDescribeNum]["Type"], $matches);
-						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = $matches[1];
+						if (isset($matches[1])){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = $matches[1];
+						}
 					}
 					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "bigint")){
 						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["type"] = "bigint";
@@ -337,7 +343,42 @@ class GenericDBO {
 						}
 						$matches = NULL;
 						preg_match("/\(([0-9\,]+)\)/", $baseDescribes[$baseDescribeNum]["Type"], $matches);
-						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = $matches[1];
+						if (isset($matches[1])){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = $matches[1];
+						}
+					}
+					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "longtext")){
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["type"] = "longtext";
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = FALSE;
+						if(TRUE === $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL === $baseDescribes[$baseDescribeNum]["Default"]){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = NULL;
+						}
+						if(TRUE !== $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL !== $baseDescribes[$baseDescribeNum]["Default"]){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = $baseDescribes[$baseDescribeNum]["Default"];
+						}
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = 4294967295;
+					}
+					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "mediumtext")){
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["type"] = "mediumtext";
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = FALSE;
+						if(TRUE === $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL === $baseDescribes[$baseDescribeNum]["Default"]){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = NULL;
+						}
+						if(TRUE !== $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL !== $baseDescribes[$baseDescribeNum]["Default"]){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = $baseDescribes[$baseDescribeNum]["Default"];
+						}
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = 16777215;
+					}
+					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "tinytext")){
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["type"] = "tinytext";
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = FALSE;
+						if(TRUE === $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL === $baseDescribes[$baseDescribeNum]["Default"]){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = NULL;
+						}
+						if(TRUE !== $describes[$baseDescribes[$baseDescribeNum]["Field"]]["null"] && NULL !== $baseDescribes[$baseDescribeNum]["Default"]){
+							$describes[$baseDescribes[$baseDescribeNum]["Field"]]["default"] = $baseDescribes[$baseDescribeNum]["Default"];
+						}
+						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["length"] = 255;
 					}
 					elseif(FALSE !== strpos($baseDescribes[$baseDescribeNum]["Type"], "text")){
 						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["type"] = "text";
@@ -379,7 +420,7 @@ class GenericDBO {
 					if(isset($baseDescribes[$baseDescribeNum]["Comment"])){
 						$describes[$baseDescribes[$baseDescribeNum]["Field"]]["comment"] = $baseDescribes[$baseDescribeNum]["Comment"];
 					}
-				
+
 				}
 				return $describes;
 			}

@@ -4,7 +4,8 @@ class RESTException extends Exception
 {
 	public function __construct($argError, $argCode=NULL, $argPrevius=NULL){
 		// 書き換える前のエラーをロギングしておく
-		logging($argError.PATH_SEPARATOR.var_export(debug_backtrace(),TRUE), 'exception');
+		logging($argError.PATH_SEPARATOR.var_export(debug_backtrace(),TRUE), 'backtrace');
+		logging($argError, 'exception');
 		debug($argError);
 		// 通常は500版のインターナルサーバエラー
 		$msg = 'Internal Server Error';

@@ -107,7 +107,7 @@ class HtmlViewAssignor {
 			$varGetten = FALSE;
 			return;
 		}
-		if (NULL !== $argTemplateHint && !isset($Template[$argDepth])){
+		if (NULL !== $argTemplateHint && TRUE === (!isset($Template[$argDepth]) || $argTemplateHint != $Template[$argDepth])){
 			if(is_object($argTemplateHint)){
 				// テンプレートエンジンインスタンスが渡ってきていると判定
 				$Template[$argDepth] = $argTemplateHint;

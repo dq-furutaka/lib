@@ -18,7 +18,10 @@ class FlowManager
 		if(isset($_SERVER['ReverseRewriteRule'])){
 			$reverseRules = explode(' ', $_SERVER['ReverseRewriteRule']);
 			if(count($reverseRules) == 2){
+				debug("flow reverseRules=".$reverseRules[0]);
 				$reverseAction = preg_replace('/' . $reverseRules[0] . '/', $reverseRules[1], $action);
+				debug("flow reverseAction=".$action);
+				debug("flow reverseAction=".$reverseAction);
 				if(NULL !== $reverseAction && strlen($reverseAction) > 0){
 					$action = strtolower($reverseAction);
 				}
@@ -66,23 +69,13 @@ class FlowManager
 			// PostパラメータからBackflowを特定する
 			if(isset($_POST['flowpostformsection-backflow-section'])){
 				$argClassName = $_POST['flowpostformsection-backflow-section'];
-// 				if(FALSE !== strpos($argClassName, '/')){
-// 					// sectionとtargetを分割する
-// 					$targetTmp = explode('/', $argClassName);
-// 					// 最後だけをsectionIDとして使う
-// 					$argClassName = $targetTmp[count($targetTmp)-1];
-// 					unset($targetTmp[count($targetTmp)-1]);
-// 					$argTargetPath = implode('/', $targetTmp) . '/';
-// 				}
-// 				if(FALSE !== strpos($argClassName, '-')){
-// 					$argClassName = str_replace('-', '_', $argClassName);
-// 				}
 			}
 			// backflowはリダイレクトポスト(307リダイレクト)
 			$query = '';
 			if(isset($_POST['flowpostformsection-backflow-section-query']) && strlen($_POST['flowpostformsection-backflow-section-query']) > 0){
 				$query = $_POST['flowpostformsection-backflow-section-query'];
 			}
+			$argClassName = str_replace('//', '/', str_replace('//', '/', $argClassName));
 			header('Location: ./'.self::reverseRewriteURL('?_c_=' . $argClassName . '&_o_='.$_GET['_o_'], $query), TRUE, 307);
 			exit();
 		}
@@ -302,6 +295,11 @@ class FlowManager
 				$code .= $tab . '}' . PHP_EOL;
 				$code .= $tab . 'Flow::$params[\'view\'][] = array(\'div[flowpostformsectionerror]\' => \'' . $argCodeNode . '\');';
 			}
+			elseif('cancelthisbackflow' === $codeType){
+				$code .= 'if(count(Flow::$params[\'backflow\']) > 0){' . PHP_EOL;
+				$code .= $tab . PHP_TAB . 'unset(Flow::$params[\'backflow\'][count(Flow::$params[\'backflow\']) -1]);' . PHP_EOL;
+				$code .= $tab. '}' . PHP_EOL;
+			}
 			elseif('flowviewparam' === $codeType){
 				$code .= 'if(NULL === Flow::$params[\'view\']){' . PHP_EOL;
 				$code .= $tab . PHP_TAB . 'Flow::$params[\'view\'] = array();' . PHP_EOL;
@@ -365,7 +363,13 @@ class FlowManager
 				}
 				// conditionとは排他
 				elseif(isset($tmpAttr['var']) && strlen($tmpAttr['var']) > 0){
-					$code .= '$' . $tmpAttr['var'];
+					if (FALSE !== strpos($tmpAttr['var'], '::')){
+						// クラス変数への代入としてふるまう
+						$code .= $tmpAttr['var'];
+					}
+					else {
+						$code .= '$' . $tmpAttr['var'];
+					}
 				}
 				// for文
 				if('for' === $codeType){
@@ -394,6 +398,10 @@ class FlowManager
 				// return文
 				elseif('return' === $codeType){
 					// returnは何もナシ
+				}
+				// execute文
+				elseif('execute' === $codeType){
+					// executeは何もナシ
 				}
 				// それ以外は代入扱い
 				else {

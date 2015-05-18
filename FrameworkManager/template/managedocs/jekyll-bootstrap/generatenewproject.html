@@ -1,0 +1,24 @@
+---
+layout: default
+title: GENERATE NEW PROJECT
+fa: fa-cube
+group: static navigation
+---
+{% include JB/setup %}
+			<!-- 専用のJS -->
+			<div class="maincontents">
+				<h2>GENERATE NEW PROJECT</h2>
+				<br/>
+				<h3>新たにプロジェクトを作成します。</h3>
+				<form flowpostformsection="generatenewproject-execute">
+					<div class="form-group" style="width: 340px; text-align: center; margin: 0;">
+						<input class="form-control" placeholder="プロジェクト名" type="text" name="project_name_must" value="" />
+					</div>
+					<br/>
+					<div class="buttonarea">
+						<input type="submit" class="btn btn-success" value="作成" />
+					</div>
+				</form>
+				<br/>
+				<div flowpostformsectionerror="generatenewproject-execute" class="red errormsg"></div>
+			</div>

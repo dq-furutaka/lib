@@ -6,6 +6,13 @@ class ImageControllerBase extends APIControllerBase {
 	public $outputType = "";
 
 	/**
+	 * 
+	 * @param unknown $argFilePath
+	 * @param string $argWidth
+	 * @param string $argHeight
+	 * @param string $argProportional true:サイズ上の縦横比を維持しつつ、縮小する false:指定された比率にリサイズ(アスペクト比は変わらない)
+	 * @param string $argMemcacheDSN
+	 * @return boolean
 	 */
 	protected function _getImage($argFilePath, $argWidth=NULL, $argHeight=NULL, $argProportional=NULL, $argMemcacheDSN=NULL){
 		$binary = FALSE;

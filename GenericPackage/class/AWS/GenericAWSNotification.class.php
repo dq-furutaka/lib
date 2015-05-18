@@ -25,13 +25,18 @@ class GenericAWSNotification
 	protected $_AWS = NULL;
 
 	/**
+	 * @var AWSリージョン値
+	 */
+	protected $_region = NULL;
+
+	/**
 	 * @var string ManagementConsoleで登録したアプリ(APNS_SANDBOX:開発用)
 	 */
 	protected $_arnBase = NULL;
 
 	/**
 	 * 初期化します。
-	 * 
+	 *
 	 * Configureの値をもとにAmazon SNSの初期化を行います。
 	 */
 	protected function _init(){
@@ -85,6 +90,11 @@ class GenericAWSNotification
 					$region = $ProjectConfigure::AWS_SNS_REGION;
 				}
 			}
+			$regions = Region::values();
+			if(!isset($regions[$region])){
+				return FALSE;
+			}
+			$this->_region = $regions[$region];
 			$arns = explode('://', $baseArn);
 			$this->_arnBase = 'arn:aws:sns:'.$arns[0].':app/%target_pratform%/'.$arns[1];
 			$this->_initialized = TRUE;
@@ -93,7 +103,7 @@ class GenericAWSNotification
 						'key'    => $apiKey,
 						'secret' => $apiSecret,
 						//'region' => constant('Region::'.$region)
-						'region' => Region::TOKYO
+						'region' => $this->_region
 				))->get('sns');
 			}
 		}
@@ -113,17 +123,24 @@ class GenericAWSNotification
 	 * 		</ul>
 	 * @return Model|boolean 結果もしくはfalse
 	 */
-	public function createPlatformEndpoint($argDevicetoken, $argDeviceType) {
+	public function createPlatformEndpoint($argDevicetoken, $argDeviceType, $argSandbox=FALSE) {
 		$this->_init();
 		$targetPratform = 'APNS_SANDBOX';
-		if(TRUE !== isTest() && TRUE === ('iOS' === $argDeviceType || 'iPhone' === $argDeviceType || 'iPad' === $argDeviceType || 'iPod' === $argDeviceType)){
+		logging('notify ismode='.var_export($argSandbox, true), 'push');
+		debug('notify mode=test!');
+		logging('notify mode=test!', 'push');
+		if(FALSE === $argSandbox && TRUE === ('iOS' === $argDeviceType || 'iPhone' === $argDeviceType || 'iPad' === $argDeviceType || 'iPod' === $argDeviceType)){
 			// 本番用のiOSPush通知
+			debug('notify mode=release!');
+			logging('notify mode=release!', 'push');
 			$targetPratform = 'APNS';
 		}
-		else {
+		else if('Android' === $argDeviceType){
 			// Android用はココ！
+			$targetPratform = 'GCM';
 		}
 		$arn = str_replace('%target_pratform%', $targetPratform, $this->_arnBase);
+		logging('create endpoint arn='.$arn, 'push');
 		$options = array(
 				'PlatformApplicationArn' => $arn,
 				'Token'                  => $argDevicetoken,
@@ -157,12 +174,12 @@ class GenericAWSNotification
 	 * @param string $argCustomURLScheme カスタムURLスキーマ
 	 * @return Model|boolean 結果もしくはfalse
 	 */
-	public function pushMessage($argDeviceIdentifier, $argDeviceType, $argMessage, $argBadge=1, $argCustomURLScheme=NULL) {
+	public function pushMessage($argDeviceIdentifier, $argDeviceType, $argMessage, $argBadge=1, $argCustomURLScheme=NULL, $argSandbox=FALSE) {
 		$message = array('alert'=>$argMessage, 'badge' => $argBadge, 'sound' => 'default');
 		if(NULL !== $argCustomURLScheme){
 			$message['scm'] = $argCustomURLScheme;
 		}
-		return $this->pushJson($argDeviceIdentifier, $argDeviceType, $message);
+		return $this->pushJson($argDeviceIdentifier, $argDeviceType, $message, $argSandbox);
 	}
 
 	/**
@@ -210,15 +227,15 @@ class GenericAWSNotification
 	 * 		</table>
 	 * @return Model|boolean 結果もしくはfalse
 	 */
-	public function pushJson($argDeviceIdentifier, $argDeviceType, $argments) {
+	public function pushJson($argDeviceIdentifier, $argDeviceType, $argments, $argSandbox=FALSE) {
 		$this->_init();
 		$newEndpoint = NULL;
 		$deviceEndpoint = $argDeviceIdentifier;
 		logging('endpoint='.$deviceEndpoint, 'push');
-		if(FALSE === strpos('arn:aws:sns:', $argDeviceIdentifier)){
+		if(FALSE === strpos($argDeviceIdentifier, 'arn:aws:sns:')){
 			// エンドポイント指定では無いので、先ずはAESにEndpoint登録をする
 			logging('create endpoint:'.$deviceEndpoint.':'.$argDeviceType, 'push');
-			$res = $this->createPlatformEndpoint($argDeviceIdentifier, $argDeviceType);
+			$res = $this->createPlatformEndpoint($argDeviceIdentifier, $argDeviceType, $argSandbox);
 			logging('pushJson for create endpoint res=', 'push');
 			logging($res, 'push');
 			if(FALSE !== $res){
@@ -226,17 +243,33 @@ class GenericAWSNotification
 				$deviceEndpoint = $newEndpoint;
 			}
 		}
+		logging('$deviceEndpoint='.$deviceEndpoint, 'push');
 		try {
 			$targetPratform = 'APNS_SANDBOX';
-			if(TRUE !== isTest() && TRUE === ('iOS' === $argDeviceType || 'iPhone' === $argDeviceType || 'iPad' === $argDeviceType || 'iPod' === $argDeviceType)){
-				// 本番用のiOSPush通知
-				$targetPratform = 'APNS';
-			}
-			else {
-				// Android用はココ！
-			}
 			$json = array('MessageStructure' => 'json', 'TargetArn' => trim($deviceEndpoint));
 			$json['Message'] = json_encode(array($targetPratform => json_encode(array('aps' => $argments))));
+			if(TRUE === ('iOS' === $argDeviceType || 'iPhone' === $argDeviceType || 'iPad' === $argDeviceType || 'iPod' === $argDeviceType)){
+				if(FALSE === $argSandbox){
+					// 本番用のiOSPush通知
+					$targetPratform = 'APNS';
+					$json['Message'] = json_encode(array($targetPratform => json_encode(array('aps' => $argments))));
+				}
+				if(FALSE !== strpos($deviceEndpoint, '/APNS/')){
+					// 本番用のiOSPush通知
+					$targetPratform = 'APNS';
+					$json['Message'] = json_encode(array($targetPratform => json_encode(array('aps' => $argments))));
+				}
+				if(FALSE !== strpos($deviceEndpoint, '/APNS_SANDBOX/')){
+					// テスト用のiOSPush通知
+					$targetPratform = 'APNS_SANDBOX';
+					$json['Message'] = json_encode(array($targetPratform => json_encode(array('aps' => $argments))));
+				}
+			}
+			else if('Android' === $argDeviceType){
+				// Android用はココ！
+				$targetPratform = 'GCM';
+				$json['Message'] = json_encode(array($targetPratform => json_encode(array('data' => $argments))));
+			}
 			logging($json, 'push');
 			$res = $this->_AWS->publish($json);
 		}
