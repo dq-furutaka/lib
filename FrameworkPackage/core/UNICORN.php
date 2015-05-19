@@ -2429,17 +2429,23 @@ if(TRUE === $_consoled){
 			}
 			else{
 				// バリデーションチェック
+				$valid = TRUE;
 				if (!is_dir($_SERVER['argv'][2])) {
-					echo ' (!)エラー : installerの公開ディレクトリには、存在するディレクトリを指定して下さい' . PHP_EOL;
-					echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
-					echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+					// 作成出来るか試みる
+					if (!mkdir($_SERVER['argv'][2], 0777, true)){
+						echo ' (!)エラー : installerの公開ディレクトリには、存在するディレクトリを指定して下さい' . PHP_EOL;
+						echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
+						echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+						$valid = FALSE;
+					}
 				}
 				elseif(FALSE === strpos($_SERVER['argv'][3], 'http')){
 					echo ' (!)エラー : installerの公開URLは、「http」から指定して下さい'.PHP_EOL;
 					echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
 					echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+					$valid = FALSE;
 				}
-				else{
+				if (TRUE === $valid){
 					// installer.phpをコピー
 					if(!dir_copy(dirname(dirname(__FILE__)).'/installer', $_SERVER['argv'][2] . '/installer')){
 						echo ' (!)エラー : installerのコピーに失敗しました！' . PHP_EOL;
@@ -2517,7 +2523,7 @@ if(TRUE === $_consoled){
 						if(str_replace('//', '/', $_SERVER['argv'][2] . '/installer/index.php') !== str_replace('//', '/', dirname(dirname(__FLE__)).'/installer/index.php')){
 							@touch($_SERVER['argv'][2] . '/installer/.copy');
 						}
-						$installerURL = $_SERVER['argv'][3].'/installer/';
+						$installerURL = str_replace('//installer/', '/installer/', $_SERVER['argv'][3].'/installer/');
 						if(isset($_SERVER['argv'][4]) && 'debug' === $_SERVER['argv'][4]){
 							$installerURL .= '?debug=1';
 						}
@@ -2536,55 +2542,79 @@ if(TRUE === $_consoled){
 		// 説明を表示
 		echo PHP_EOL;
 		echo PHP_EOL;
-		echo ' フレームワークのコマンドラインツールは以下の事を提供します' . PHP_EOL;
+		echo ' フレームワークのインストールを提供します。' . PHP_EOL;
+		echo ' 以下のコマンドを実行して下さい。' . PHP_EOL;
+		echo ' Webベースナビゲーションのインストーラー"NT-D"が起動します。' . PHP_EOL;
+		echo PHP_EOL;
+// 		echo ' php '.dirname(dirname(dirname(__FILE__))).'/'.basename(__FILE__, '.php').' NT-D' . PHP_EOL;
+// 		echo ' OR'.PHP_EOL;
+// 		echo ' php '.dirname(dirname(dirname(__FILE__))).'/'.basename(__FILE__, '.php').' install' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo ' ■フレームワークのインストーラーのWeb公開ディレクトリを指定する場合は以下のコマンドを実行して下さい。' . PHP_EOL;
+		echo ' php '.dirname(dirname(dirname(__FILE__))).'/'.basename(__FILE__, '.php').' install [インストーラーのWeb公開ディレクトリ] [インストーラーのWeb公開URL]'.PHP_EOL;
+		echo ' OR'.PHP_EOL;
+		echo ' php '.dirname(dirname(dirname(__FILE__))).'/'.basename(__FILE__, '.php').' NT-D  [インストーラーのWeb公開ディレクトリ] [インストーラーのWeb公開URL]' . PHP_EOL;
 		echo PHP_EOL;
 		echo PHP_EOL;
-		echo ' 1.(NT-Dシステムによる)フレームワークインストールナビゲーション' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ■フレームワークのインストーラーをWeb公開ディレクトリに配置し、インストーラーのURLを払い出す' . PHP_EOL;
-		echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
-		echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+		echo ' 例) php '.dirname(dirname(dirname(__FILE__))).'/'.basename(__FILE__, '.php').' NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
 		echo PHP_EOL;
 		echo PHP_EOL;
-		echo PHP_TAB . ' ■フレームワークのインストーラーのURLをデバッグモードフラグ付きで払い出す' . PHP_EOL;
-		echo PHP_TAB . ' -> php UNICORN NT-D installerの公開ディレクトリ installerの公開URL debug' . PHP_EOL;
-		echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/ debug' . PHP_EOL;
+		echo ' ※フレームワークのインストーラーをデバッグモードで実行する場合は「 debug」をコマンドの末尾に付加して下さい。' . PHP_EOL;
+		echo ' 例) php '.dirname(dirname(dirname(__FILE__))).'/'.basename(__FILE__, '.php').' NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/ debug' . PHP_EOL;
 		echo PHP_EOL;
 		echo PHP_EOL;
-		// 		echo ' 2.(LA+システムによる)フレームワークマネージメント' . PHP_EOL;
-		// 		echo PHP_EOL;
-		// 		echo PHP_TAB . ' -> php UNICORN management [or] php UNICORN LA+' . PHP_EOL;
-		// 		echo PHP_EOL;
-		// 		echo PHP_EOL;
-		echo ' 2.(ORMapper「PsychoFrame」を利用した)データベースマイグレーション(※準備中)' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ※ 前提条件 : フレームワークのインストールを完了し、データベース接続設定が完了している事' . PHP_EOL;
-		echo PHP_TAB . ' 分からない場合はフレームワーク管理機能を先ず利用してみて下さい' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ■全てのテーブルをマイグレーションする' . PHP_EOL;
-		echo PHP_TAB . ' -> php UNICORN migration [or] php UNICORN PsychoJack' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ■指定のテーブルをマイグレーションする' . PHP_EOL;
-		echo PHP_TAB . ' -> php UNICORN migration テーブル名 [or] php UNICORN PsychoJack テーブル名' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ■全てのマイグレーションを適用する' . PHP_EOL;
-		echo PHP_TAB . ' -> php UNICORN migration up [or] php UNICORN PsychoBurst' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ■指定のテーブルにマイグレーションを適用する' . PHP_EOL;
-		echo PHP_TAB . ' -> UNICORN migration up テーブル名 [or] php UNICORN PsychoBurst テーブル名' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_TAB . ' ■マイグレーションの一覧を表示する' . PHP_EOL;
-		echo PHP_TAB . ' -> UNICORN migration list [or] php UNICORN PsychoFrame' . PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL;
-		echo PHP_EOL .' 必要なコマンドを上記から見つけ出し、再度コマンドを入力して実行して下さい' . PHP_EOL;
-		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo ' フレームワークのコマンドラインツールは以下の事を提供します' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo ' 1.(NT-Dシステムによる)フレームワークインストールナビゲーション' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■フレームワークのインストーラーをWeb公開ディレクトリに配置し、インストーラーのURLを払い出す' . PHP_EOL;
+// 		echo PHP_TAB . ' -> php UNICORN install installerの公開ディレクトリ installerの公開URL [or] php UNICORN NT-D  installerの公開ディレクトリ installerの公開URL' . PHP_EOL;
+// 		echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■フレームワークのインストーラーのURLをデバッグモードフラグ付きで払い出す' . PHP_EOL;
+// 		echo PHP_TAB . ' -> php UNICORN NT-D installerの公開ディレクトリ installerの公開URL debug' . PHP_EOL;
+// 		echo PHP_TAB . ' 例) php UNICORN NT-D '.dirname(dirname(dirname(dirname(__FILE__)))).'/htdocs/ http://mydomian.com/unicorn/ debug' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		// 		echo ' 2.(LA+システムによる)フレームワークマネージメント' . PHP_EOL;
+// 		// 		echo PHP_EOL;
+// 		// 		echo PHP_TAB . ' -> php UNICORN management [or] php UNICORN LA+' . PHP_EOL;
+// 		// 		echo PHP_EOL;
+// 		// 		echo PHP_EOL;
+// 		echo ' 2.(ORMapper「PsychoFrame」を利用した)データベースマイグレーション(※準備中)' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ※ 前提条件 : フレームワークのインストールを完了し、データベース接続設定が完了している事' . PHP_EOL;
+// 		echo PHP_TAB . ' 分からない場合はフレームワーク管理機能を先ず利用してみて下さい' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■全てのテーブルをマイグレーションする' . PHP_EOL;
+// 		echo PHP_TAB . ' -> php UNICORN migration [or] php UNICORN PsychoJack' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■指定のテーブルをマイグレーションする' . PHP_EOL;
+// 		echo PHP_TAB . ' -> php UNICORN migration テーブル名 [or] php UNICORN PsychoJack テーブル名' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■全てのマイグレーションを適用する' . PHP_EOL;
+// 		echo PHP_TAB . ' -> php UNICORN migration up [or] php UNICORN PsychoBurst' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■指定のテーブルにマイグレーションを適用する' . PHP_EOL;
+// 		echo PHP_TAB . ' -> UNICORN migration up テーブル名 [or] php UNICORN PsychoBurst テーブル名' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_TAB . ' ■マイグレーションの一覧を表示する' . PHP_EOL;
+// 		echo PHP_TAB . ' -> UNICORN migration list [or] php UNICORN PsychoFrame' . PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL;
+// 		echo PHP_EOL .' 必要なコマンドを上記から見つけ出し、再度コマンドを入力して実行して下さい' . PHP_EOL;
+// 		echo PHP_EOL;
 	}
 	exit(PHP_EOL.PHP_EOL);
 }
