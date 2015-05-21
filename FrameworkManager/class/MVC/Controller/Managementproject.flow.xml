@@ -435,7 +435,7 @@
 		<execute>
 			<if condition="true === Auth::isCertification()">
 				<if condition="true === isset(Flow::$params['get']['target']) &amp;&amp; 2 &lt; strlen(Flow::$params['get']['target']) &amp;&amp; true === is_dir(getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'/'.Flow::$params['get']['target'].'Sample')">
-					<assing var="outputFile" val="getConfig('TEMPLATEHTML_PATH', PROJECT_NAME).Flow::$params['get']['target'].'.zip'"/>
+					<assing var="outputFile" val="MANAGER_DOCUMENT_ROOT_PATH.'static/'.Flow::$params['get']['target'].'.zip'"/>
 					<if condition="true === is_file($outputFile)">
 						<execute val="unlink($outputFile)"/>
 					</if>
@@ -453,10 +453,22 @@
 	<section id="Managementproject-generateiosmodel">
 		<execute>
 			<if condition="true === Auth::isCertification()">
-				<assign var="res" method="dir_copy" arg1="getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'installer'" arg2="MANAGER_DOCUMENT_ROOT_PATH.'installer'"/>
-				<assign var="res" class="ProjectManager" method="resolveProjectInstaller" arg1="Flow::$params['get']['target_project']" arg2="MANAGER_DOCUMENT_ROOT_PATH"/>
-				<assign var="res" method="touch" arg1="MANAGER_DOCUMENT_ROOT_PATH.'installer/.copy'"/>
-				<assign var="res" method="header" arg1="'Location:'.getConfig('BASE_URL', PROJECT_NAME).'installer/index.php'"/>
+				<if condition="true === isset(Flow::$params['get']['target']) &amp;&amp; 2 &lt; strlen(Flow::$params['get']['target']) &amp;&amp; true === is_dir(getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'/'.Flow::$params['get']['target'].'Sample')">
+					<assign var="out" class="ProjectManager" method="migrateAppModel" arg1="Flow::$params['get']['target_project']" arg2="Flow::$params['get']['target']"/>
+					<assing var="outputFile" val="MANAGER_DOCUMENT_ROOT_PATH.'static/'.Flow::$params['get']['target'].'Model.zip'"/>
+					<if condition="true === is_file($outputFile)">
+						<execute val="unlink($outputFile)"/>
+					</if>
+					<if condition="'iOS' === Flow::$params['get']['target']">
+						<assing var="res" method="zip" arg1="getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'/'.Flow::$params['get']['target'].'Sample/Project/Classes/Model'" arg2="$outputFile"/>
+					</if>
+					<elseif condition="'android' === Flow::$params['get']['target']">
+						<assing var="res" method="zip" arg1="getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'/'.Flow::$params['get']['target'].'Sample/Project/src/com/unicorn/model'" arg2="$outputFile"/>
+					</elseif>
+					<if condition="true === $res">
+						<execute val="header('Location: ./static/'.Flow::$params['get']['target'].'Model.zip')"/>
+					</if>
+				</if>
 			</if>
 			<else>
 				<flow section="login"/>

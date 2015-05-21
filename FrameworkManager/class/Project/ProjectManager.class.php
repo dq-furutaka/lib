@@ -31,7 +31,7 @@ class ProjectManager
 			// installer内のプロジェクト名を書き換える
 			// 			$installerStr = file_get_contents($movePath.'/installer/index.php');
 			// 			$installerStr = str_replace('$projectpkgName = "Project";', '$projectpkgName = "'.ucfirst($newProjectName).'";', $installerStr);
-			$peoductNameDefinedLine = 'define("PROJECT_NAME", "'.ucfirst($newProjectName).'");';
+			//$peoductNameDefinedLine = 'define("PROJECT_NAME", "'.ucfirst($newProjectName).'");';
 
 			// インストーラーからみたフレームワークのパスを書き換える
 			$baseFrameworkPath = dirname(Configure::CORE_PATH);
@@ -45,7 +45,7 @@ class ProjectManager
 			file_put_contents($movePath.'/apidocs/index.php', $apiIndexStr);
 			// 重いのでコマメにunset
 			unset($apiIndexStr);
-			// iOSサンプル内のプロジェクト内のRESTfulAPIの向け先を帰る
+			// iOSサンプル内のプロジェクト内のRESTfulAPIの向け先を変える
 			$iosdefineStr = file_get_contents($movePath.'/iOSSample/Project/SupportingFiles/define.h');
 			// レビュー用の暫定処理
 			$basePath = str_replace('/'.PROJECT_NAME.'/', '|', $_SERVER["REQUEST_URI"]);
@@ -59,82 +59,84 @@ class ProjectManager
 		return TRUE;
 	}
 
-	public static function resolveProjectInstaller($argTargetProjectName, $argInstallerBasePath){
-		// プロジェクト名の定義設定
-		$newProjectName = $argTargetProjectName;
-		if(0 < strpos($argTargetProjectName, 'Package')){
-			$newProjectName = substr($argTargetProjectName, 0, -7);
-		}
-		$peoductNameDefinedLine = 'define("PROJECT_NAME", "'.$newProjectName.'");';
-		// インストーラーからみたフレームワークのパスを書き換える
-		$baseFrameworkPath = dirname(Configure::CORE_PATH);
-		$paths = explode('/', str_replace('//','/', $argInstallerBasePath.'/installer'));
-		// パスが一致するところまでさかのぼり、それを新たなルートパスとし、そこを基準にFrameworkのパスを設定しなおす
-		$tmpPath = "/";
-		for($tmpPathIdx=0, $pathIdx=1; $pathIdx <= count($paths); $pathIdx++){
-			// 空文字は無視
-			if(isset($paths[$pathIdx]) && strlen($paths[$pathIdx]) > 0){
-				if(0 === strpos($baseFrameworkPath, $tmpPath.$paths[$pathIdx])){
-					$tmpPath .= $paths[$pathIdx]."/";
-					$tmpPathIdx++;
-					// パスが一致したので次へ
-					continue;
+	public static function migrateAppModel($argTargetProjectName, $argTargetPlatform){
+		$DBO = DBO::sharedInstance(getConfig('DB_DSN', $argTargetProjectName));
+		$tables = $DBO->getTables();
+		for ($tblIdx=0; $tblIdx < count($tables); $tblIdx++){
+			// テーブル毎にマイグレーション
+			$tableName = strtolower($tables[$tblIdx]);
+			$modelName = str_replace(' ', '', ucwords(str_replace('_', ' ', $tableName)));
+			$describes = $DBO->getTableDescribes($tables[$tblIdx]);
+			if(is_array($describes) && count($describes) > 0){
+				if ('iOS' === $argTargetPlatform){
+					$headerfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/emptyModel.h');
+					$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/emptyModel.m');
+					$protected = '';
+					$public = '';
+					$synthesize = '';
+					$flags = '';
+					$accesser = '';
+					$init = '';
+					$save = '';
+					$convert = '';
+					$set = '';
+					$reset = '';
+					foreach($describes as $colName => $describe){
+						if ('id' !== $colName){
+							$protected .= '    NSString *'.$colName.';'.PHP_CR.PHP_LF;
+							$public .= '@property (strong, nonatomic) NSString *'.$colName.';'.PHP_CR.PHP_LF;
+							$synthesize .= '@synthesize '.$colName.';'.PHP_CR.PHP_LF;
+							$flags .= '    BOOL '.$colName.'_replaced;'.PHP_CR.PHP_LF;
+							$accesser .= '-(void)set'.ucfirst($colName).':(NSString *)arg'.ucfirst($colName).PHP_CR.PHP_LF;
+							$accesser .= '{'.PHP_CR.PHP_LF;
+							$accesser .= '    '.$colName.' = arg'.ucfirst($colName).';'.PHP_CR.PHP_LF;
+							$accesser .= '    '.$colName.'_replaced = YES;'.PHP_CR.PHP_LF;
+							$accesser .= '    replaced = YES;'.PHP_CR.PHP_LF;
+							$accesser .= '}'.PHP_CR.PHP_LF.PHP_CR.PHP_LF;
+							$init .= '        '.$colName.'_replaced = NO;'.PHP_CR.PHP_LF;
+							$save .= '        if(YES == '.$colName.'_replaced){'.PHP_CR.PHP_LF;
+							$save .= '            [saveParams setValue:self.'.$colName.' forKey:@"'.$colName.'"];'.PHP_CR.PHP_LF;
+							$save .= '        }'.PHP_CR.PHP_LF;
+							$convert .= '    [newDic setObject:self.'.$colName.' forKey:@"'.$colName.'"];'.PHP_CR.PHP_LF;
+							$set .= '    self.'.$colName.' = [argDataDic objectForKey:@"'.$colName.'"];'.PHP_CR.PHP_LF;
+							$reset .= '    '.$colName.'_replaced = NO;'.PHP_CR.PHP_LF;
+						}
+						else {
+							$convert .= '    [newDic setObject:self.ID forKey:@"id"];'.PHP_CR.PHP_LF;
+							$set .= '    self.ID = [argDataDic objectForKey:@"id"];'.PHP_CR.PHP_LF;
+						}
+					}
+					$headerfile = str_replace('%modelName%', $modelName, $headerfile);
+					$headerfile = str_replace('%protected%', $protected, $headerfile);
+					$headerfile = str_replace('%public%', $public, $headerfile);
+					$modelfile = str_replace('%modelName%', $modelName, $modelfile);
+					$modelfile = str_replace('%tableName%', $tableName, $modelfile);
+					$modelfile = str_replace('%flags%', $flags, $modelfile);
+					$modelfile = str_replace('%synthesize%', $synthesize, $modelfile);
+					$modelfile = str_replace('%accesser%', $accesser, $modelfile);
+					$modelfile = str_replace('%init%', $init, $modelfile);
+					$modelfile = str_replace('%save%', $save, $modelfile);
+					$modelfile = str_replace('%convert%', $convert, $modelfile);
+					$modelfile = str_replace('%set%', $set, $modelfile);
+					$modelfile = str_replace('%reset%', $reset, $modelfile);
+					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'ModelBase.h', $headerfile);
+					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'ModelBase.m', $modelfile);
 				}
-				else{
-					// 一致しなかったので、この前までが一致パスとする
-					break;
+				elseif ('android' === $argTargetPlatform){
+					
+				}
+				elseif ('cocos' === $argTargetPlatform){
+					
+				}
+				elseif ('swift' === $argTargetPlatform){
+					
+				}
+				elseif ('cocosjs' === $argTargetPlatform){
+					
 				}
 			}
 		}
-		$depth = count($paths) - $tmpPathIdx;
-		$dirnameStr = '__FILE__';
-		for($dirnameIdx=0; $dirnameIdx < $depth; $dirnameIdx++){
-			$dirnameStr = 'dirname('.$dirnameStr.')';
-		}
-		$frameworkPathStr = '$frameworkPath = '.str_replace($tmpPath, $dirnameStr.'."/', $baseFrameworkPath).'";';
-		debug($baseFrameworkPath);
-		debug($tmpPath);
-		debug($dirnameStr.'."/');
-		$projectPathStr = '$projectPath = '.str_replace($tmpPath, $dirnameStr.'."/', dirname(getConfig(PROJECT_ROOT_PATH)).'/'.$newProjectName.'Package').'";';
-		$fwmgrPathStr = '$fwmgrPath = "'.substr(getConfig(PROJECT_ROOT_PATH), 0, -1).'";';
-		debug($frameworkPathStr);
-		debug($projectPathStr);
-		debug($fwmgrPathStr);
-		
-		$targetLine1Num = 15;
-		$targetLine2Num = 20;
-		$targetLine4Num = 23;
-		$targetLine3Num = 26;
-		$readLine = 0;
-
-		// 新しい定義で書き換え
-		debug($argInstallerBasePath);
-		$handle = fopen($argInstallerBasePath.'/installer/index.php', 'r');
-		$file='';
-		while (($buffer = fgets($handle, 4096)) !== false) {
-			$readLine++;
-			if($targetLine1Num === $readLine){
-				// 置換処理
-				$file .= $peoductNameDefinedLine . PHP_EOL;
-			}
-			elseif($targetLine2Num === $readLine){
-				// 置換処理
-				$file .= $frameworkPathStr . PHP_EOL;
-			}
-			elseif($targetLine3Num === $readLine){
-				// 置換処理
-				$file .= $fwmgrPathStr . PHP_EOL;
-			}
-			elseif($targetLine4Num === $readLine){
-				// 置換処理
-				$file .= $projectPathStr . PHP_EOL;
-			}
-			else {
-				$file .= $buffer;
-			}
-		}
-		fclose($handle);
-		file_put_contents($argInstallerBasePath.'/installer/index.php', $file);
+		return TRUE;
 	}
 }
 
