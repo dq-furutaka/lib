@@ -114,7 +114,51 @@ class ProjectManager
 					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'ModelBase.m', $modelfile);
 				}
 				elseif ('android' === $argTargetPlatform){
-					
+					$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/emptyModel.java');
+					$public = '';
+					$flags = '';
+					$accesser = '';
+					$save = '';
+					$convert = '';
+					$set = '';
+					$reset = '';
+					foreach($describes as $colName => $describe){
+						if ('id' !== $colName){
+							$public .= PHP_TAB.'public String '.$colName.';'.PHP_CR.PHP_LF;
+							$flags .= PHP_TAB.'public boolean '.$colName.'_replaced;'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.'/**'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.' * setterメソッドです'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.' * setterによりフィールドが変更されたことを保持するreplacedフラグをtrueに書き換え'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.' * どのフィールドが変更されたかを保持するフィールド名_replacedフラグをtrueに書き換えます'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.' * @param arg'.ucfirst($colName).' '.$colName.'が入っています'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.' */'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.'public void set'.ucfirst($colName).'(String arg'.ucfirst($colName).') {'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.PHP_TAB.$colName.' = arg'.ucfirst($colName).';'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.PHP_TAB.$colName.'_replaced = true;'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.PHP_TAB.'replaced = true;'.PHP_CR.PHP_LF;
+							$accesser .= PHP_TAB.'}'.PHP_CR.PHP_LF.PHP_CR.PHP_LF;
+							$save .= PHP_TAB.PHP_TAB.PHP_TAB.'if ('.$colName.'_replaced) {'.PHP_CR.PHP_LF;
+							$save .= PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB.'argSaveParams.put("'.$colName.'", '.$colName.');'.PHP_CR.PHP_LF;
+							$save .= PHP_TAB.PHP_TAB.PHP_TAB.'}'.PHP_CR.PHP_LF;
+							$convert .= PHP_TAB.PHP_TAB.'newMap.put("'.$colName.'", '.$colName.');'.PHP_CR.PHP_LF;
+							$set .= PHP_TAB.PHP_TAB.$colName.' = (String) map.get("'.$colName.'");'.PHP_CR.PHP_LF;
+							$reset .= PHP_TAB.PHP_TAB.$colName.'_replaced = false;'.PHP_CR.PHP_LF;
+						}
+						else {
+							$convert .= PHP_TAB.PHP_TAB.'newMap.put("id", ID);';
+							$set .= PHP_TAB.PHP_TAB.'ID = (String) map.get("id");';
+						}
+					}
+					$modelfile = str_replace('%modelName%', $modelName, $modelfile);
+					$modelfile = str_replace('%tableName%', $tableName, $modelfile);
+					$modelfile = str_replace('%public%', $public, $modelfile);
+					$modelfile = str_replace('%flags%', $flags, $modelfile);
+					$modelfile = str_replace('%accesser%', $accesser, $modelfile);
+					$modelfile = str_replace('%save%', $save, $modelfile);
+					$modelfile = str_replace('%convert%', $convert, $modelfile);
+					$modelfile = str_replace('%set%', $set, $modelfile);
+					$modelfile = str_replace('%reset%', $reset, $modelfile);
+					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/src/com/unicorn/model/'.$modelName.'ModelBase.m', $modelfile);
 				}
 				elseif ('cocos' === $argTargetPlatform){
 					

@@ -1,12 +1,12 @@
 //
-//  %modelName%.m
+//  %modelName%ModelBase.m
 //
 //  Copyright (c) 2014年 saimushi. All rights reserved.
 //
 
-#import "%modelName%.h"
+#import "%modelName%ModelBase.h"
 
-@implementation %modelName%
+@implementation %modelName%ModelBase
 {
 %flags%
 }
