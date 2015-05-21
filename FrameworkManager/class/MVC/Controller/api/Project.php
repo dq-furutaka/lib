@@ -2,6 +2,8 @@
 
 class Project extends RestControllerBase {
 
+	public $virtualREST = TRUE;
+
 	public function get(){
 		// プロジェクトの一覧を返す
 		$dirs = array();

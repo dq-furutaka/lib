@@ -25,7 +25,11 @@ require_once $fwpath."/core/UNICORN";
 
 $conName = PROJECT_NAME."Configure";
 
+$flowPath = NULL;
+if (defined($conName."::FLOWXML_PATH")){
+	$flowPath = $conName::FLOWXML_PATH;
+}
 // フレームワークのMVCフレームワーク機能(FLOW版)を使う
-Core::webmain($conName::FLOWXML_PATH);
+Core::webmain($flowPath);
 
 ?>

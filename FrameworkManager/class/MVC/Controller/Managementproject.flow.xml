@@ -336,6 +336,88 @@
 			</else>
 		</execute>
 	</section>
+	<section id="Managementproject-dispatchdbsettings">
+		<execute>
+			<if condition="true === Auth::isCertification()">
+				<if condition="false === isset(Flow::$params['get']['target_project'])">
+					<exception/>
+				</if>
+				<if condition="0 === Flow::$params['get']['target_project']">
+					<exception/>
+				</if>
+				<flowviewparam selector="#createdb" val="htmlspecialchars(file_get_contents(getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'core/createdb.sql'))"/>
+				<if condition="true !== $autoValidated">
+					<flowpostformsectionerror>必須パラメータを入力して下さい</flowpostformsectionerror>
+				</if>
+				<elseif condition="true === isset(Flow::$params['post']['modify'])">
+					<assign var="connect" method="mysqli_connect" arg1="Flow::$params['post']['dbhost_must']" arg2="Flow::$params['post']['dbuser_must']" arg3="Flow::$params['post']['dbpass']" arg4="'mysql'" arg5="Flow::$params['post']['dbport_must']"/>;
+					<if condition="false === $connect">
+						<flowpostformsectionerror>DB接続に失敗しました</flowpostformsectionerror>
+					</if>
+					<else>
+						<assign var="res" method="mysqli_set_charset" arg1="$connect" arg2="utf8"/>
+						<assign var="res" method="mysqli_multi_query" arg1="$connect" arg2="file_get_contents(getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'core/createdb.sql')"/>
+						<if condition="false === res">
+							<flowpostformsectionerror>CreateDBに失敗しました</flowpostformsectionerror>
+						</if>
+						<else>
+							<flowpostformsectionerror>初期DB定義を適用しました。</flowpostformsectionerror>
+						</else>
+					</else>
+				</elseif>
+				<view flowpostformsection="managementproject-dispatchdbsettings"/>
+			</if>
+			<else>
+				<flow section="login"/>
+			</else>
+		</execute>
+	</section>
+	<section id="Managementproject-dispatchtablesettings">
+		<execute>
+			<if condition="true === Auth::isCertification()">
+				<if condition="false === isset(Flow::$params['get']['target_project'])">
+					<exception/>
+				</if>
+				<if condition="0 === Flow::$params['get']['target_project']">
+					<exception/>
+				</if>
+				<flowviewparam selector="#createtable" val="htmlspecialchars(file_get_contents(getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'core/createtable.sql'))"/>
+				<flowviewparam selector="#dbdsn" val="htmlspecialchars(getConfig('DB_DSN', Flow::$params['get']['target_project']))"/>
+				<if condition="true !== $autoValidated">
+					<flowpostformsectionerror>必須パラメータを入力して下さい</flowpostformsectionerror>
+				</if>
+				<elseif condition="true === isset(Flow::$params['post']['modify'])">
+					<assign var="DBO" class="DBO" method="sharedInstance" arg1="getConfig('DB_DSN', Flow::$params['get']['target_project'])"/>
+					<assign var="tables" method="explode" arg1="&quot;\n&quot;" arg2="file_get_contents(getConfig('PROJECT_ROOT_PATH', Flow::$params['get']['target_project']).'core/createtable.sql')"/>
+					<assign var="res" instance="DBO" method="begin"/>
+					<if condition="false === $res">
+						<flowpostformsectionerror>DB接続に失敗しました</flowpostformsectionerror>
+					</if>
+					<else>
+						<for iterate="$tblidx=0" iterator="$tblidx &lt; count($tables)" iteration="$tblidx++">
+							<assign var="query" val="trim($tables[$tblidx])"/>
+							<if condition="0 === strpos(strtoupper($query), 'CREATE ') || 0 === strpos(strtoupper($query), 'ARTER ')">
+								<assign var="res" instance="DBO" method="execute" arg1="$query"/>
+								<if condition="false === $res">
+									<flowpostformsectionerror>CreateTableに失敗しました</flowpostformsectionerror>
+									<assign var="res" instance="DBO" method="rollback"/>
+									<execute val="break"/>
+								</if>
+							</if>
+						</for>
+						<if condition="$tblidx == count($tables)">
+							<flowpostformsectionerror>初期テーブル定義を適用しました。</flowpostformsectionerror>
+							<assign var="res" instance="DBO" method="commit"/>
+						</if>
+					</else>
+				</elseif>
+				<view flowpostformsection="managementproject-dispatchtablesettings"/>
+			</if>
+			<else>
+				<flow section="login"/>
+			</else>
+		</execute>
+	</section>
 	<section id="Managementproject-execinstaller">
 		<execute>
 			<if condition="true === Auth::isCertification()">

@@ -2020,7 +2020,7 @@ $(document).ready(function(){
 				<small>データベースユーザー名</small>
 				<div id="step3input6form_box" class="text-input-form">
 					<form id="step3input6-1form" name="step3input6-1form">
-						<input id="input-fwmdbuser" class="input-text" type="text" name="mysqluser" value="" maxlenght="255" />
+						<input id="input-fwmdbuser" class="input-text" type="text" name="fwmdbuser" value="" maxlenght="255" />
 						<input id="input-fwmdbuser-reset" class="input-reset" type="reset" value="×" />
 					</form><span class="loading"></span>
 				</div>

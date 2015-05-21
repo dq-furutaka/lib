@@ -2,6 +2,7 @@ RewriteEngine On
 
 # フィルターを無効に
 SetEnv _filter_ 'false'
+SetEnv _availalefilter_ 'false'
 
 # All files with .something are skipped
 RewriteCond %{REQUEST_URI} \..+$

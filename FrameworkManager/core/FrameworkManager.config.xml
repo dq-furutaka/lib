@@ -1,19 +1,19 @@
-<?xml	version="1.0"	encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <xml>
 		<FrameworkManager>
-				<PROJECT_ROOT_PATH	code="TRUE"><![CDATA[dirname(dirname(__FILE__)).'/']]></PROJECT_ROOT_PATH>
-				<PACKAGE_CONFIG_XML_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'core/'.PROJECT_NAME.'.package.xml']]></PACKAGE_CONFIG_XML_PATH>
-				<FLOWXML_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'class/MVC/Controller/']]></FLOWXML_PATH>
-				<TEMPLATEHTML_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'template/managedocs/static/']]></TEMPLATEHTML_PATH>
-				<SAMPLE_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/']]></SAMPLE_PATH>
-				<SAMPLE_PACKAGE_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/packages/']]></SAMPLE_PACKAGE_PATH>
-				<SAMPLE_PROJECT_PACKAGE_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/packages/ProjectPackage/']]></SAMPLE_PROJECT_PACKAGE_PATH>
-				<SAMPLE_APIDOC_PATH	code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/apidocs/']]></SAMPLE_APIDOC_PATH>
+				<PROJECT_ROOT_PATH code="TRUE"><![CDATA[dirname(dirname(__FILE__)).'/']]></PROJECT_ROOT_PATH>
+				<PACKAGE_CONFIG_XML_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'core/'.PROJECT_NAME.'.package.xml']]></PACKAGE_CONFIG_XML_PATH>
+				<FLOWXML_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'class/MVC/Controller/']]></FLOWXML_PATH>
+				<TEMPLATEHTML_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'template/managedocs/static/']]></TEMPLATEHTML_PATH>
+				<SAMPLE_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/']]></SAMPLE_PATH>
+				<SAMPLE_PACKAGE_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/packages/']]></SAMPLE_PACKAGE_PATH>
+				<SAMPLE_PROJECT_PACKAGE_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/packages/ProjectPackage/']]></SAMPLE_PROJECT_PACKAGE_PATH>
+				<SAMPLE_APIDOC_PATH code="TRUE"><![CDATA[%PROJECT_ROOT_PATH%.'sample/apidocs/']]></SAMPLE_APIDOC_PATH>
 				<DB_DSN>mysqli://fwm:fwmpass@localhost/fwm</DB_DSN>
-				<BASE_URL	stage="local">http://localhost/workspace/GMATCH/src/server/managedocs/</BASE_URL>
-				<BASE_URL	stage="test">http://localhost/workspace/GMATCH/src/server/managedocs/</BASE_URL>
-				<BASE_URL>http://localhost/workspace/GMATCH/src/server/managedocs/</BASE_URL>
-				<DENY_HTTP>false</DENY_HTTP>
+				<BASE_URL stage="local">http://localhost/workspace/otkr-net-server/server/src/managedocs/</BASE_URL>
+				<BASE_URL stage="test">http://localhost/workspace/otkr-net-server/server/src/managedocs/</BASE_URL>
+				<BASE_URL>http://localhost/workspace/otkr-net-server/server/src/managedocs/</BASE_URL>
+				<DENY_HTTP>1</DENY_HTTP>
 				<DENY_ALL_IP>false</DENY_ALL_IP>
 				<!--	汎用Authの定義	-->
 				<AUTH_TBL_NAME>user</AUTH_TBL_NAME>

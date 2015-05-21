@@ -64,6 +64,7 @@ class GenericDBO {
 	public function __construct($argDSN=NULL){
 		if(NULL !==$argDSN && strlen($argDSN) > 0){
 			$this->DSN = $argDSN;
+			$this->dbidentifykey = sha1($argDSN);
 		}
 		self::_initDB();
 		if(0 === strpos($this->DSN, "mysql")){
@@ -85,10 +86,12 @@ class GenericDBO {
 		if(TRUE === @property_exists($this, "DSN") && isset($this->DSN) && NULL !== $this->DSN && strlen($this->DSN) > 0){
 			// 与えられたDSN情報を使用する
 			$dsn = $this->DSN;
-			$calledClassName = "default";
-			if(TRUE === @property_exists($this, "dbidentifykey")){
-				$this->dbidentifykey = $calledClassName;
-			}
+			$calledClassName = strtolower($this->dbidentifykey);
+// 			$calledClassName = "default";
+// 			if(TRUE === @property_exists($this, "dbidentifykey")){
+// 				$calledClassName = strtolower($this->dbidentifykey);
+// 				$this->dbidentifykey = $calledClassName;
+// 			}
 		}
 		else{
 			// フレームワークの機能を使ったDSNの自動解決処理
@@ -117,11 +120,13 @@ class GenericDBO {
 				// 定数を使う
 				$dsn = DB_DSN;
 			}
+			$calledClassName = sha1($dsn);
 			if(TRUE === @property_exists($this, "DSN")){
 				$this->DSN = $dsn;
 			}
 			if(TRUE === @property_exists($this, "dbidentifykey")){
-				$this->dbidentifykey = $calledClassName;
+				$this->dbidentifykey = sha1($dsn);
+// 				$this->dbidentifykey = $calledClassName;
 			}
 		}
 

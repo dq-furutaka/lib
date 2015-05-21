@@ -20,6 +20,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 	public $authUserQuery = NULL;
 	public $deepRESTMode = TRUE;
 	public $rootREST = TRUE;
+	public $virtualREST = FALSE;
 	public $responceData = FALSE;
 	public static $nowGMT = NULL;
 
@@ -75,6 +76,10 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				if(NULL !== $ProjectConfigure::constant('REST_RESOURCE_RELAY_PREFIX')){
 					$this->restResourceRelayPrefix = $ProjectConfigure::REST_RESOURCE_RELAY_PREFIX;
 				}
+			}
+			// オートavailableの強制OFF判定
+			if(isset($_SERVER['_availalefilter_']) && TRUE == ('0' === $_SERVER['_availalefilter_'] || 'false' === strtolower($_SERVER['_availalefilter_']))){
+				$this->restResourceAvailableKeyName = '';
 			}
 			if(NULL === self::$nowGMT){
 				self::$nowGMT = Utilities::date('Y-m-d H:i:s', NULL, NULL, 'GMT');
@@ -660,6 +665,10 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				$RestController->appleReviewd = $this->appleReviewd;
 				$RestController->mustAppVersioned = $this->mustAppVersioned;
 				$RestController->deepRESTMode = $this->deepRESTMode;
+				if (!isset($RestController->virtualREST)){
+					$RestController->virtualREST = $this->virtualREST;
+				}
+				debug("virtualREST=".var_export($RestController->virtualREST,true));
 				$RestController->restResource = $this->restResource;
 				$RestController->restResourceModel = $this->restResourceModel;
 				$RestController->restResourceListed = $this->restResourceListed;
@@ -693,6 +702,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 				$this->appleReviewd = $RestController->appleReviewd;
 				$this->mustAppVersioned = $RestController->mustAppVersioned;
 				$this->deepRESTMode = $RestController->deepRESTMode;
+				$this->virtualREST = $RestController->virtualREST;
 				$this->restResource = $RestController->restResource;
 				$this->restResourceModel = $RestController->restResourceModel;
 				$this->restResourceListed = $RestController->restResourceListed;
@@ -899,7 +909,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 			header('Records: ' . $res['count']);
 			$res = TRUE;
 		}
-		else if(TRUE === $this->rootREST && 'GET' === $this->requestMethod){
+		else if(TRUE === $this->rootREST && FALSE === $this->virtualREST && 'GET' === $this->requestMethod && TRUE !== ('index' === strtolower($this->restResourceModel) && 'html' === $this->outputType)){
 			// GETの時はHEADリクエストの結果を包括する為の処理
 			try{
 				$headRes = $this->head();
