@@ -28,15 +28,6 @@ class ProjectManager
 			file_put_contents($newConfigXMLPath, $configXMLStr);
 			// 重いのでコマメにunset
 			unset($configXMLStr);
-			// installer内のプロジェクト名を書き換える
-			// 			$installerStr = file_get_contents($movePath.'/installer/index.php');
-			// 			$installerStr = str_replace('$projectpkgName = "Project";', '$projectpkgName = "'.ucfirst($newProjectName).'";', $installerStr);
-			//$peoductNameDefinedLine = 'define("PROJECT_NAME", "'.ucfirst($newProjectName).'");';
-
-			// インストーラーからみたフレームワークのパスを書き換える
-			$baseFrameworkPath = dirname(Configure::CORE_PATH);
-			self::resolveProjectInstaller($newProjectName, $movePath);
-
 			// RESRAPI-index内のプロジェクト名を書き換える
 			$apidocPath = $movePath.'/apidocs';
 			$apiIndexStr = file_get_contents($apidocPath.'/index.php');
