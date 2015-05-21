@@ -729,6 +729,20 @@ function sha256($argment, $argRawOutput=FALSE){
 	return hash("sha256", $argment, $argRawOutput);
 }
 
+function zip($argCompressTarget, $argCompressedFilePath){
+	$cmd = '';
+	$file = $argCompressTarget;
+	if(true === is_dir($argCompressTarget)){
+		$cmd .= 'cd '.dirname($argCompressTarget).';';
+		$file = basename($argCompressTarget);
+	}
+	// Linuxコマンドの実行
+	if(FALSE === system($cmd."zip -r ".$argCompressedFilePath." ".$file)){
+		return FALSE;
+	}
+	return TRUE;
+}
+
 function parse_phpinput_str(){
 	$data = array();
 	// Fetch content and determine boundary
