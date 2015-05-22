@@ -13,7 +13,7 @@
 				<BASE_URL stage="local">http://localhost/workspace/otkr-net-server/server/src/managedocs/</BASE_URL>
 				<BASE_URL stage="test">http://localhost/workspace/otkr-net-server/server/src/managedocs/</BASE_URL>
 				<BASE_URL>http://localhost/workspace/otkr-net-server/server/src/managedocs/</BASE_URL>
-				<DENY_HTTP>1</DENY_HTTP>
+				<DENY_HTTP>false</DENY_HTTP>
 				<DENY_ALL_IP>false</DENY_ALL_IP>
 				<!--	汎用Authの定義	-->
 				<AUTH_TBL_NAME>user</AUTH_TBL_NAME>
