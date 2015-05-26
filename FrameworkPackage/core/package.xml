@@ -44,7 +44,7 @@
 		<link>default.implement.Auth/Auth</link>
 	</Auth>
 	<!-- DB版 -->
-	<!--Session>>
+	<!--Session>
 		<package>DBO</package>
 		<link>default.interface.Session/SessionIO</link>
 		<link>default.abstract.Session/SessionDataDB</link>

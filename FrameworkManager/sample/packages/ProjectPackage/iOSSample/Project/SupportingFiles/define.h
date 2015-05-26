@@ -87,7 +87,7 @@
 // Distribution Archive(Releaseビルド)
 # define DEPROY_SETTING @"Distribution Archive Run"
 # define PROTOCOL @"https"
-# define DOMAIN_NAME @"api.kanokare.jp"
+# define DOMAIN_NAME @"api.unicorn-project.com"
 # define URL_BASE @"/"
 
 

@@ -40,6 +40,7 @@ if (!isset($useAPI)){
 	Auth::$authIDEncrypted = getConfig('TOOL_AUTH_ID_ENCRYPTED');
 	Auth::$authPassEncrypted = getConfig('TOOL_AUTH_PASS_ENCRYPTED');
 }
+
 // フレームワークのMVCフレームワーク機能(FLOW版)を使う
 Core::webmain($flowPath);
 

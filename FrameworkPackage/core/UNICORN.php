@@ -712,68 +712,71 @@ function loadConfig($argConfigPath){
 					$configs[$key.'Configure'] = '';
 				}
 				foreach(get_object_vars($val) as $key2 => $val2){
-					$evalFlag = FALSE;
-					if(count($val2) > 1){
-						$skip = TRUE;
-						for($attrCnt=0;count($val2)>$attrCnt;$attrCnt++){
-							if(isset($configure->{$key}->{$key2}[$attrCnt]->attributes()->stage)){
-								$stage = $configure->{$key}->{$key2}[$attrCnt]->attributes()->stage;
-								if('local' == $stage && 1 === (int)$localFlag){
-									$skip = FALSE;
-									BREAK;
+					if('comment' != $key2){
+						$evalFlag = FALSE;
+						if(count($val2) > 1){
+							$skip = TRUE;
+							for($attrCnt=0;count($val2)>$attrCnt;$attrCnt++){
+								var_dump($key2);
+								if(isset($configure->{$key}->{$key2}[$attrCnt]->attributes()->stage)){
+									$stage = $configure->{$key}->{$key2}[$attrCnt]->attributes()->stage;
+									if('local' == $stage && 1 === (int)$localFlag){
+										$skip = FALSE;
+										BREAK;
+									}
+									elseif('dev' == $stage && 1 === (int)$devFlag){
+										$skip = FALSE;
+										BREAK;
+									}
+									elseif('test' == $stage && 1 === (int)$testFlag){
+										$skip = FALSE;
+										BREAK;
+									}
+									elseif('staging' == $stage && 1 === (int)$stagingFlag){
+										$skip = FALSE;
+										BREAK;
+									}
 								}
-								elseif('dev' == $stage && 1 === (int)$devFlag){
-									$skip = FALSE;
-									BREAK;
-								}
-								elseif('test' == $stage && 1 === (int)$testFlag){
-									$skip = FALSE;
-									BREAK;
-								}
-								elseif('staging' == $stage && 1 === (int)$stagingFlag){
-									$skip = FALSE;
-									BREAK;
+								else{
+									$defAttrCnt = $attrCnt;
 								}
 							}
-							else{
-								$defAttrCnt = $attrCnt;
+							if(TRUE === $skip){
+								$attrCnt = $defAttrCnt;
+							}
+							$val2 = $val2[$attrCnt];
+							if(isset($configure->{$key}->{$key2}[$attrCnt]->attributes()->code)){
+								$evalFlag = TRUE;
 							}
 						}
-						if(TRUE === $skip){
-							$attrCnt = $defAttrCnt;
-						}
-						$val2 = $val2[$attrCnt];
-						if(isset($configure->{$key}->{$key2}[$attrCnt]->attributes()->code)){
+						elseif(isset($configure->{$key}->{$key2}) && isset($configure->{$key}->{$key2}->attributes()->code)){
 							$evalFlag = TRUE;
 						}
-					}
-					elseif(isset($configure->{$key}->{$key2}) && isset($configure->{$key}->{$key2}->attributes()->code)){
-						$evalFlag = TRUE;
-					}
-					$val2 = trim($val2);
-					$matches = NULL;
-					if(preg_match_all('/\%(.+)\%/',$val2,$matches) > 0){
-						for($matchCnt=0; count($matches[0]) > $matchCnt; $matchCnt++){
-							$matchKey = $matches[0][$matchCnt];
-							$matchStr = $matches[1][$matchCnt];
-							$val2 = substr_replace($val2,$configure->{$key}->{$matchStr},strpos($val2,$matchKey),strlen($matchKey));
+						$val2 = trim($val2);
+						$matches = NULL;
+						if(preg_match_all('/\%(.+)\%/',$val2,$matches) > 0){
+							for($matchCnt=0; count($matches[0]) > $matchCnt; $matchCnt++){
+								$matchKey = $matches[0][$matchCnt];
+								$matchStr = $matches[1][$matchCnt];
+								$val2 = substr_replace($val2,$configure->{$key}->{$matchStr},strpos($val2,$matchKey),strlen($matchKey));
+							}
 						}
-					}
-					if(TRUE === $evalFlag){
-						if(FALSE !== strpos($val2, '__FILE__')){
-							$val2 = str_replace('__FILE__', '\'' . realpath($argConfigPath) .'\'', $val2);
+						if(TRUE === $evalFlag){
+							if(FALSE !== strpos($val2, '__FILE__')){
+								$val2 = str_replace('__FILE__', '\'' . realpath($argConfigPath) .'\'', $val2);
+							}
+							@eval('$val2 = '.$val2.';');
+							//$configure->{$key}->{$key2} = $val2;
+							$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = \''.$val2.'\';'.PHP_EOL;
 						}
-						@eval('$val2 = '.$val2.';');
-						//$configure->{$key}->{$key2} = $val2;
-						$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = \''.$val2.'\';'.PHP_EOL;
-					}
-					else{
-						if(strlen($val2) == 0){
-							$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = \'\';'.PHP_EOL;
-						}elseif('TRUE' == strtoupper($val2) || 'FALSE' == strtoupper($val2) || 'NULL' == strtoupper($val2) || is_numeric($val2)){
-							$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = '.$val2.';'.PHP_EOL;
-						}else{
-							$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = \''.addslashes($val2).'\';'.PHP_EOL;
+						else{
+							if(strlen($val2) == 0){
+								$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = \'\';'.PHP_EOL;
+							}elseif('TRUE' == strtoupper($val2) || 'FALSE' == strtoupper($val2) || 'NULL' == strtoupper($val2) || is_numeric($val2)){
+								$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = '.$val2.';'.PHP_EOL;
+							}else{
+								$configs[$key.'Configure'] .= PHP_TAB.'const '.$key2.' = \''.addslashes($val2).'\';'.PHP_EOL;
+							}
 						}
 					}
 				}

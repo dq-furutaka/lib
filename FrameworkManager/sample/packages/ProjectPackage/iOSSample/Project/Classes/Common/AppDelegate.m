@@ -1,16 +1,13 @@
 //
 //  AppDelegate.m
-//  GMatch
 //
 //  Created by saimushi on 2014/09/19.
+//  Copyright (c) 2014年 saimushi. All rights reserved.
 //
 
 #import "AppDelegate.h"
 
 @implementation AppDelegate
-{
-
-}
 
 @synthesize mainRootViewController;
 @synthesize topViewController;
@@ -35,30 +32,36 @@
 
     // ナビゲーションバーのスタイルを定義しておく
     // ナビゲーションバーの全体の色指定
-    [UINavigationBar appearance].barTintColor = RGBA(113, 113, 113, 1);
+    [[UINavigationBar appearance] setBarTintColor:RGBA(113, 113, 113, 1)];
     // ナビゲーションバーのボタンアイテムのテキストカラー指定
-    [UINavigationBar appearance].tintColor = [UIColor whiteColor];
+    [[UINavigationBar appearance] setTintColor:[UIColor whiteColor]];
     // ナビゲーションバーのタイトルテキストカラー指定
-    [UINavigationBar appearance].titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    [[UINavigationBar appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}];
 
     // タブバーのスタイルを定義しておく
-    // タブバーの選択色指定
-    [[UITabBar appearance] setTintColor:RGBA(255, 209, 64, 1)];
     // タブバーの背景色指定
-    [UITabBar appearance].barTintColor = [UIColor whiteColor];
+    [[UITabBar appearance] setBarTintColor:[UINavigationBar appearance].barTintColor];
+    // タブバーのタイトルテキストカラー指定
+    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]} forState:UIControlStateNormal];
+    // タブバーの選択色指定
+    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor blueColor]} forState:UIControlStateSelected];
 
     // TabbarItemの数だけUINavigationControllerのインスタンスを生成
     self.topViewController = [[TopViewController alloc] init];
+    UIViewControllerBase *settingViewController = [[SettingViewController alloc] init];
     UINavigationController *topNavigationController = [[UINavigationController alloc] initWithRootViewController:self.topViewController];
-    topNavigationController.navigationBarHidden = YES;
-    UINavigationController *settingNavigationController = [[UINavigationController alloc] initWithRootViewController:[[SettingViewController alloc] init]];
+    UINavigationController *settingNavigationController = [[UINavigationController alloc] initWithRootViewController:settingViewController];
     topNavigationController.navigationBar.barStyle = UIBarStyleBlack;
     settingNavigationController.navigationBar.barStyle = UIBarStyleBlack;
 
-    // TabBarControllerにNavigationControllerをセット
+    // タブバーの設置
     UITabBarController *tabBarController = [[UITabBarController alloc] init];
     tabBarController.delegate = self;
+    // TabBarControllerにNavigationControllerをセット
     tabBarController.viewControllers = [NSMutableArray arrayWithObjects:topNavigationController, settingNavigationController, nil];
+    // タブバータイトルの設定
+    ((UITabBarItem *)[tabBarController.tabBar.items objectAtIndex:0]).title = self.topViewController.screenName;
+    ((UITabBarItem *)[tabBarController.tabBar.items objectAtIndex:1]).title = settingViewController.screenName;
 
     // タブコントローラをメインルートに設定
     self.mainRootViewController = tabBarController;
@@ -201,10 +204,11 @@
 - (void)showLoading:(NSString *)argLoadingMessage;
 {
     if (nil == argLoadingMessage || [argLoadingMessage isEqualToString:@""]){
-        argLoadingMessage = @"読み込み中...";
+        argLoadingMessage = NSLocalizedString(@"Loading...", @"読み込み中...");
     }
     // ステータスバーの通信インジケータを表示
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    // ローディングを表示
     [MProgress showProgressWithLoadingText:argLoadingMessage];
 }
 
@@ -212,16 +216,16 @@
 {
     // ステータスバーの通信インジケータを表示
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    [MProgress showProgressWithLoadingText:@"読み込み中..."];
+    // ローディングを表示
+    [MProgress showProgressWithLoadingText:NSLocalizedString(@"Loading...", @"読み込み中...")];
 }
 
 - (void)hideLoading;
 {
     // ステータスバーの通信インジケータを非表示
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-    [MProgress dismissProgress];
     // ローディングを非表示
-    //[MRProgressOverlayView dismissOverlayForView:self.window animated:YES];
+    [MProgress dismissProgress];
 }
 
 

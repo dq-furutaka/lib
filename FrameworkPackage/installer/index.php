@@ -3082,7 +3082,7 @@ elseif(isset($_GET["a"])){
 			}
 			$username = $_POST["fwmusername"];
 			$usermail = $_POST["fwmusermail"];
-			$tableName = "`user`";
+			$tableName = "`fwmuser`";
 			if("UNICORN" !== PROJECT_NAME) {
 				// 管理機能用のテーブルを生成する
 				$tableName = '`pmusers`';
