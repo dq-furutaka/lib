@@ -36,16 +36,26 @@ class ProjectManager
 			file_put_contents($movePath.'/apidocs/index.php', $apiIndexStr);
 			// 重いのでコマメにunset
 			unset($apiIndexStr);
+
 			// iOSサンプル内のプロジェクト内のRESTfulAPIの向け先を変える
 			$iosdefineStr = file_get_contents($movePath.'/iOSSample/Project/SupportingFiles/define.h');
-			// レビュー用の暫定処理
-			$basePath = str_replace('/'.PROJECT_NAME.'/', '|', $_SERVER["REQUEST_URI"]);
-			$basePaths = explode('|', $basePath);
-			$iosdefineStr = str_replace('# define URL_BASE @"/workspace/UNICORN/src/lib/FrameworkManager/template/managedocs/"', '# define URL_BASE @"'.$basePaths[0].'/'.$newProjectName.'Package/apidocs/'.'"', $iosdefineStr);
+			// REQUEST_URI と $movePath からローカルのドキュメントルートPathを特定する
+			$tmpPath = dirname(dirname($_SERVER["REQUEST_URI"]));
+			$tmpPaths = explode('/lib/'.PROJECT_NAME.'/', $tmpPath);
+			$documentRoot = $tmpPaths[0];
+			$movePaths = explode('/lib/'.$newProjectName.'Package', $movePath);
+			$tmpPaths = explode($documentRoot, $movePaths[0]);
+			$baseURL = $documentRoot.'/lib/'.$newProjectName.'Package/apidocs/';
+			if (isset($tmpPaths[1]) && 0 < strlen($tmpPaths[1])){
+				$baseURL = $documentRoot.'/'.$tmpPaths[1].'/lib/'.$newProjectName.'Package/apidocs/';
+			}
+			$iosdefineStr = str_replace('#define URL_BASE @"/workspace/UNICORN/src/lib/FrameworkManager/template/managedocs/"', '# define URL_BASE @"'.$baseURL.'"', $iosdefineStr);
 			// 新しい定義で書き換え
 			file_put_contents($movePath.'/iOSSample/Project/SupportingFiles/define.h', $iosdefineStr);
 			// 重いのでコマメにunset
 			unset($iosdefineStr);
+
+			// XXX Android用の処理
 		}
 		return TRUE;
 	}
