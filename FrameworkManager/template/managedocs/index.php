@@ -29,6 +29,17 @@ $flowPath = NULL;
 if (defined($conName."::FLOWXML_PATH")){
 	$flowPath = $conName::FLOWXML_PATH;
 }
+
+// 管理画面用のAuth::initをする
+if (!isset($useAPI)){
+	Auth::init();
+	Auth::$authTable = getConfig('TOOL_AUTH_TBL_NAME');
+	Auth::$authPKeyField = getConfig('TOOL_AUTH_PKEY_FIELD_NAME');
+	Auth::$authIDField = getConfig('TOOL_AUTH_ID_FIELD_NAME');
+	Auth::$authPassField = getConfig('TOOL_AUTH_PASS_FIELD_NAME');
+	Auth::$authIDEncrypted = getConfig('TOOL_AUTH_ID_ENCRYPTED');
+	Auth::$authPassEncrypted = getConfig('TOOL_AUTH_PASS_ENCRYPTED');
+}
 // フレームワークのMVCフレームワーク機能(FLOW版)を使う
 Core::webmain($flowPath);
 

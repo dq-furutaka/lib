@@ -1,9 +1,8 @@
 //
 //  MainNavigationBarView.h
-//  Sample
+//  GMatch
 //
-//  Created by saimushi on 2014/06/09.
-//  Copyright (c) 2014年 shuhei_ohono. All rights reserved.
+//  Created by saimushi on 2014/09/19.
 //
 
 #import "common.h"
@@ -13,5 +12,7 @@
 
 - (id)initWithFrame:(CGRect)frame andTitle:(NSString *)title;
 - (void)setTile:(NSString *)title;
+- (void)setTile:(NSString *)title :(int)argFontSize;
+- (void)setLogo;
 
 @end

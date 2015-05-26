@@ -1,55 +1,104 @@
 //
 //  AppDelegate.m
-//  Sample
+//  GMatch
 //
-//  Created by saimushi on 2014/06/03.
-//  Copyright (c) 2014年 shuhei_ohono. All rights reserved.
+//  Created by saimushi on 2014/09/19.
 //
 
 #import "AppDelegate.h"
-#import "MainViewController.h"
-#import "SecureUDID.h"
 
 @implementation AppDelegate
+{
+
+}
 
 @synthesize mainRootViewController;
+@synthesize topViewController;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    // 実行環境のダンプ
+#ifdef DEPROY_SETTING
+    NSLog(@"DEPROY_SETTING=%@", DEPROY_SETTING);
+#endif
+
+    // Google Analyticsの初期化
+    [self initializeGoogleAnalytics];
+    
+    NSDictionary *userInfo = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+    if (userInfo != nil) {
+        //アプリが起動していないときにpush通知からアプリが起動された時
+    }
+
+    // アプリ全体のステータスバーのスタイルを変更(用plistのView controller-based status bar = NO)
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+
     // ナビゲーションバーのスタイルを定義しておく
     // ナビゲーションバーの全体の色指定
-    [UINavigationBar appearance].barTintColor = RGBA(255, 40, 140, 1);
+    [UINavigationBar appearance].barTintColor = RGBA(113, 113, 113, 1);
     // ナビゲーションバーのボタンアイテムのテキストカラー指定
     [UINavigationBar appearance].tintColor = [UIColor whiteColor];
     // ナビゲーションバーのタイトルテキストカラー指定
     [UINavigationBar appearance].titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
 
+    // タブバーのスタイルを定義しておく
+    // タブバーの選択色指定
+    [[UITabBar appearance] setTintColor:RGBA(255, 209, 64, 1)];
+    // タブバーの背景色指定
+    [UITabBar appearance].barTintColor = [UIColor whiteColor];
+
+    // TabbarItemの数だけUINavigationControllerのインスタンスを生成
+    self.topViewController = [[TopViewController alloc] init];
+    UINavigationController *topNavigationController = [[UINavigationController alloc] initWithRootViewController:self.topViewController];
+    topNavigationController.navigationBarHidden = YES;
+    UINavigationController *settingNavigationController = [[UINavigationController alloc] initWithRootViewController:[[SettingViewController alloc] init]];
+    topNavigationController.navigationBar.barStyle = UIBarStyleBlack;
+    settingNavigationController.navigationBar.barStyle = UIBarStyleBlack;
+
+    // TabBarControllerにNavigationControllerをセット
+    UITabBarController *tabBarController = [[UITabBarController alloc] init];
+    tabBarController.delegate = self;
+    tabBarController.viewControllers = [NSMutableArray arrayWithObjects:topNavigationController, settingNavigationController, nil];
+
+    // タブコントローラをメインルートに設定
+    self.mainRootViewController = tabBarController;
+
+    // Windowを表示
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
+    [self.window setRootViewController:self.mainRootViewController];
     [self.window makeKeyAndVisible];
-//    if(nil == [ModelBase loadIdentifier:SESSION_CRYPT_KEY :SESSION_CRYPT_IV]){
-//        [self setMainViewController:[[FirstViewController alloc] init]];
-//    }
-//    else{
-        // 一度認証を踏んでいたら、Main画面からスタートさせる
-        [self setMainViewController];
-//    }
-    
+
     return YES;
 }
 
-- (void)setMainViewController;
+- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
 {
-    UINavigationController *rootNavigation = [[UINavigationController alloc] initWithRootViewController:[[MainViewController alloc] init]];
-    rootNavigation.navigationBar.barStyle = UIBarStyleBlack;
-    [self setMainViewController:rootNavigation];
+    return YES;
 }
 
-- (void)setMainViewController:(UIViewController *)argViewControllerID;
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 {
-    self.mainRootViewController = argViewControllerID;
-    [self.window setRootViewController:self.mainRootViewController];
+    // バックグラウンドPushを使わない場合の通知受け取りの実装
+    NSLog(@"userinfo %@",userInfo);
+    if (application.applicationState == UIApplicationStateActive){
+        //アプリがフォアグラウンドにいる時にpush通知を受け取った
+    }
+    else if (application.applicationState == UIApplicationStateInactive){
+        // 通知からの復帰
+    }
+    else if (application.applicationState == UIApplicationStateBackground) {
+        // バックグラウンドでの通知の受け取り
+    }
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+    // バックグラウンドPushを使う場合の通知受け取りの実装
+    [self application:application didReceiveRemoteNotification:userInfo];
+    // completionHandlerはダウンロードのような時間がかかる処理では非同期に呼ぶ。
+    // 同期処理でも呼ばないとログにWarning出力されるので注意。
+    completionHandler(UIBackgroundFetchResultNoData);
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -79,53 +128,148 @@
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+
+#pragma mark - デバイストークンDelegate関連
+
 // デバイストークンの受取
 - (void)application:(UIApplication*)app didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)token
 {
-    [ModelBase saveDeviceTokenData:token];
+    [ProjectModelBase saveDeviceTokenData:token];
+    if([[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] == NSOrderedAscending){
+        // i0S7以前の処理
+        // XXX 通知のOFFかも知れない場合の処理
+    }
+    else {
+        // iOS8の処理
+        UIUserNotificationSettings *currentSettings = [[UIApplication
+                                                        sharedApplication] currentUserNotificationSettings];
+        // types:0 通知off
+        if(currentSettings.types != 0){
+            // XXX 通知のOFFの場合の処理
+        }
+    }
 }
 
-// 通信のレジュームパッケージはそのうちつくりまふ・・・orz
-//- (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
-//{
-//    [sessionTask resume];
-//}
+- (void)application:(UIApplication*)app didFailToRegisterForRemoteNotificationsWithError:(NSError*)err{
+    NSLog(@"Errorinregistration.Error:%@",err);
+}
+
+- (void)registerDeviceToken;
+{
+    if([[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] == NSOrderedAscending){
+        // i0S7以前の処理
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeSound|UIRemoteNotificationTypeAlert)];
+    }
+    else {
+        // iOS8の処理
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert categories:nil]];
+    }
+}
+
+#pragma mark - プライベートメソッド関連
+
+#pragma mark - パブリックメソッド関連
+
+- (void)initializeGoogleAnalytics
+{
+    
+//    // Optional: automatically send uncaught exceptions to Google Analytics.
+//    [GAI sharedInstance].trackUncaughtExceptions = YES;
+//    
+//    // Optional: set Google Analytics dispatch interval to e.g. 20 seconds.
+//    [GAI sharedInstance].dispatchInterval = 20;
+//    
+//    // Optional: set Logger to VERBOSE for debug information.
+//    [[[GAI sharedInstance] logger] setLogLevel:kGAILogLevelVerbose];
+//    
+//    // Initialize tracker. Replace with your tracking ID.
+//    [[GAI sharedInstance] trackerWithTrackingId:GOOGLE_ANALYTICS_TRACKING_ID];
+//    
+//    // Enable IDFA collection.
+//    id<GAITracker> tracker = [[GAI sharedInstance] defaultTracker];
+//    [tracker setAllowIDFACollection:YES];
+}
 
 - (BOOL)isSimulator;
 {
     return [[[UIDevice currentDevice] model] hasSuffix:@"Simulator"];
 }
 
-
 #pragma mark - ローディング関連
+
+- (void)showLoading:(NSString *)argLoadingMessage;
+{
+    if (nil == argLoadingMessage || [argLoadingMessage isEqualToString:@""]){
+        argLoadingMessage = @"読み込み中...";
+    }
+    // ステータスバーの通信インジケータを表示
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    [MProgress showProgressWithLoadingText:argLoadingMessage];
+}
 
 - (void)showLoading;
 {
     // ステータスバーの通信インジケータを表示
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    // ローディングを表示
-    [MRProgressOverlayView showOverlayAddedTo:self.window animated:YES];
+    [MProgress showProgressWithLoadingText:@"読み込み中..."];
 }
 
 - (void)hideLoading;
 {
     // ステータスバーの通信インジケータを非表示
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+    [MProgress dismissProgress];
     // ローディングを非表示
-    [MRProgressOverlayView dismissOverlayForView:self.window animated:YES];
+    //[MRProgressOverlayView dismissOverlayForView:self.window animated:YES];
 }
 
+
+#pragma mark - UITabbarDelegate関連
+
+- (void)tabBarController:(UITabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController
+{
+    // 選択されたタブのルートをtopViewControllerとしてしまっておく
+    self.topViewController  = [((UINavigationController *)viewController).viewControllers objectAtIndex:0];
+}
 
 
 #pragma mark - ModelDelegate関連
 
+- (void)didReceiveMustUpdate:(NSString *)argUpdateURL;
+{
+    // 強制アップデートを受信
+}
+
+- (void)didReceiveAppBadgeNum:(NSString *)argBadgeNumStr;
+{
+    // アプリアイコンバッジを受信
+    [UIApplication sharedApplication].applicationIconBadgeNumber = [argBadgeNumStr intValue];
+}
+
+- (void)didReceiveNotifyMessage:(NSString *)argNotifyMessage;
+{
+    NSLog(@"Notify Message=%@", argNotifyMessage);
+    NSMutableArray *messageArr = [SBJsonAgent parseArr:argNotifyMessage];
+    for (int messageIdx=0; messageIdx < messageArr.count; messageIdx++) {
+        NSMutableDictionary *messageDic = [messageArr objectAtIndex:messageIdx];
+        // 旧TSMessages風のナビゲーションバー通知表示
+        if (nil != [messageDic objectForKey:@"message"] && 0 < [[messageDic objectForKey:@"message"] length] && nil != [messageDic objectForKey:@"notify_id"] && 0 < [[messageDic objectForKey:@"notify_id"] length] &&nil != [messageDic objectForKey:@"type"] && 0 < [[messageDic objectForKey:@"type"] length]) {
+            [MMessages showMessage:[messageDic objectForKey:@"notify_id"] :[messageDic objectForKey:@"message"] :[((NSString *)[messageDic objectForKey:@"type"]) intValue]-1 :[messageDic objectForKey:@"schema"] completion:^(NSString *messageIdentifier) {
+                NSLog(@"dispatched notifyID=%@", messageIdentifier);
+            }];
+        }
+    }
+}
+
 /* アップロード・ダウンロードプログレス通知 */
 /* XXX rootViewControllerのナビゲーションバーにプログレスを表示します */
-- (void)didChangeProgress:(ModelBase*)model :(double)packetBytesSent :(double)totalBytesSent :(double)totalBytesExpectedToSend;
+- (void)didChangeProgress:(ModelBase*)model :(ProgressAgent *)progressAgent;
 {
-    NSLog(@"[bytesSent] %f, [totalBytesSent] %f, [totalBytesExpectedToSend] %f", packetBytesSent, totalBytesSent, totalBytesExpectedToSend);
-    double progress = (double)totalBytesSent / (double)totalBytesExpectedToSend;
+    NSLog(@"[bytesSent] %f, [totalBytesSent] %f, [totalBytesExpectedToSend] %f", progressAgent.packetSentBytes, progressAgent.totalSentBytes, progressAgent.totalBytes);
+//    double progress = (double)totalBytesSent / (double)totalBytesExpectedToSend;
     // performSelectorOnMainThreadで描画スレッドに行ってね♪
+    [MStatusbarProgress show:progressAgent.totalSentBytes :progressAgent.totalBytes];
 }
 
 @end

@@ -10,13 +10,21 @@
 //  Copyright (c) 2014年 saimushi. All rights reserved.
 //
 
+typedef void(^RequestCompletionHandler)(BOOL success, NSInteger statusCode, NSHTTPURLResponse *responseHeader, NSString *responseBody, NSError* error);
+
+#define DEFAULT_TIMEOUT 40
+#define DEFAULT_COOKIE_EXPIRED @"3600"
+
 @protocol RequestDelegate;
 
-@interface Request : NSObject <NSURLSessionTaskDelegate>{
+@interface Request : NSObject <NSURLSessionTaskDelegate>
+{
 	id <RequestDelegate> delegate;
+    RequestCompletionHandler completion;
 }
 
 @property (strong, nonatomic) id<RequestDelegate> delegate;
+@property (strong, nonatomic) RequestCompletionHandler completion;
 @property (strong, nonatomic) NSString *userAgent;
 
 // 通常のリクエスト処理
@@ -38,20 +46,30 @@
 // GET リソース参照
 + (void)get:(id)calledClass :(NSString *)requestURL;
 + (void)get:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams;
++ (void)get:(id)calledClass :(NSString *)requestURL withCompletion:(RequestCompletionHandler)argCompletion;
++ (void)get:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;;
 // POST リソース追加・更新・インクリメント・デクリメント
 + (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams;
 + (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSData *)uploadData :(NSString *)fileName :(NSString *)contentType :(NSString *)dataKeyName;
++ (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
++ (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSData *)uploadData :(NSString *)fileName :(NSString *)contentType :(NSString *)dataKeyName withCompletion:(RequestCompletionHandler)argCompletion;
 // ファイルアップロード
 + (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSURL *)uploadFilePath;
++ (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSURL *)uploadFilePath withCompletion:(RequestCompletionHandler)argCompletion;
 // PUT リソース追加・更新
 + (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams;
 + (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSData *)uploadData :(NSString *)fileName :(NSString *)contentType :(NSString *)dataKeyName;
++ (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
++ (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSData *)uploadData :(NSString *)fileName :(NSString *)contentType :(NSString *)dataKeyName withCompletion:(RequestCompletionHandler)argCompletion;
 // ファイルアップロード
 + (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSURL *)uploadFilePath;
++ (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSURL *)uploadFilePath withCompletion:(RequestCompletionHandler)argCompletion;
 // DELETE リソース削除
 + (void)delete:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams;
++ (void)delete:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
 // HEAD リソース定義参照
 + (void)head:(id)calledClass :(NSString *)requestURL;
++ (void)head:(id)calledClass :(NSString *)requestURL withCompletion:(RequestCompletionHandler)argCompletion;
 
 // Cookie関連
 // CookieをCookieStorageにセットする(簡易設定版)
@@ -70,7 +88,7 @@
 @optional
 - (void)setSessionDataTask:(NSURLSessionTask *)task;
 - (void)didFinishSuccess:(NSHTTPURLResponse *)responseHeader :(NSString *)responseBody;
-- (void)didFinishError:(NSHTTPURLResponse *)responseHeader :(NSError *)failedHandler;
+- (void)didFinishError:(NSHTTPURLResponse *)responseHeader :(NSString *)responseBody :(NSError *)failedHandler;
 - (void)didChangeProgress:(double)packetBytesSent :(double)totalBytesSent :(double)totalBytesExpectedToSend;
 
 @end

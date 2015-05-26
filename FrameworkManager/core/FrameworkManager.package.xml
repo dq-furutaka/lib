@@ -7,7 +7,7 @@
 		<!-- フレームワーク標準のMVCパターンを使用する場合のパス定義 -->
 		<controlmain suffix=".php">class/MVC/Controller</controlmain>
 	</default>
-	<Session>>
+	<Session>
 		<package>DBO</package>
 		<link>default.interface.Session/SessionIO</link>
 		<link>default.abstract.Session/SessionDataDB</link>

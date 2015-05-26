@@ -10,9 +10,6 @@
 #import "Request.h"
 #import "R9HTTPRequestExtension.h"
 
-#define DEFAULT_TIMEOUT 10
-#define DEFAULT_COOKIE_EXPIRED @"3600"
-
 @implementation Request
 {
     NSURLSessionTask* sessionTask;
@@ -21,9 +18,11 @@
     int statusCode;
     NSHTTPURLResponse *responseHeader;
     NSString *responseBody;
+    NSMutableData *responseBodyData;
 }
 
 @synthesize delegate;
+@synthesize completion;
 @synthesize userAgent;
 
 
@@ -65,7 +64,12 @@
     if(NO == [method isEqualToString:@"GET"] && nil != requestParams){
         NSArray *keys = [requestParams allKeys];
         for (int i = 0; i < [keys count]; i++) {
-            [request addBody:[requestParams objectForKey:[keys objectAtIndex:i]] forKey:[keys objectAtIndex:i]];
+            NSString *encodingPostParam = ((NSString*)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                                                                (CFStringRef)[requestParams objectForKey:[keys objectAtIndex:i]],
+                                                                                                                NULL,
+                                                                                                                (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                                                kCFStringEncodingUTF8)));
+            [request addBody:encodingPostParam forKey:[keys objectAtIndex:i]];
         }
     }
 
@@ -75,6 +79,7 @@
     statusCode = 0;
     responseHeader = nil;
     responseBody = nil;
+    responseBodyData = nil;
     NSURLSessionConfiguration* config = [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSession* session = [NSURLSession sessionWithConfiguration:config
                                                           delegate:self
@@ -113,7 +118,15 @@
     if(nil != requestParams){
         NSArray *keys = [requestParams allKeys];
         for (int i = 0; i < [keys count]; i++) {
-            [request addBody:[requestParams objectForKey:[keys objectAtIndex:i]] forKey:[keys objectAtIndex:i]];
+            NSString *encodingPostParam = [requestParams objectForKey:[keys objectAtIndex:i]];
+            if (![method isEqualToString:@"POST"]){
+                encodingPostParam = ((NSString*)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                                                                   (CFStringRef)[requestParams objectForKey:[keys objectAtIndex:i]],
+                                                                                                                   NULL,
+                                                                                                                   (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                                                   kCFStringEncodingUTF8)));
+            }
+            [request addBody:encodingPostParam forKey:[keys objectAtIndex:i]];
         }
     }
     
@@ -128,11 +141,13 @@
     statusCode = 0;
     responseHeader = nil;
     responseBody = nil;
+    responseBodyData = nil;
     NSURLSessionConfiguration* config = [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSession* session = [NSURLSession sessionWithConfiguration:config
                                                           delegate:self
                                                      delegateQueue:[NSOperationQueue mainQueue]];
     sessionTask = [session dataTaskWithRequest:[request getRequest]];
+//    sessionTask = [session uploadTaskWithRequest:[request getRequest] fromData:uploadData];
 // XXX TODO:バックグラウンドセッション&レジューム次のタイミングでは入れたいと思います・・・orz
 //    NSURLSessionConfiguration* config = [NSURLSessionConfiguration backgroundSessionConfiguration:requestURL];
 //    NSURLSession* session = [NSURLSession sessionWithConfiguration:config
@@ -166,7 +181,12 @@
     if(nil != requestParams){
         NSArray *keys = [requestParams allKeys];
         for (int i = 0; i < [keys count]; i++) {
-            [request addBody:[requestParams objectForKey:[keys objectAtIndex:i]] forKey:[keys objectAtIndex:i]];
+            NSString *encodingPostParam = ((NSString*)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                                                                (CFStringRef)[requestParams objectForKey:[keys objectAtIndex:i]],
+                                                                                                                NULL,
+                                                                                                                (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                                                kCFStringEncodingUTF8)));
+            [request addBody:encodingPostParam forKey:[keys objectAtIndex:i]];
         }
     }
 
@@ -201,8 +221,9 @@
         userAgent = [webView stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
         NSString *appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
         NSString *buildVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-        NSLog(@"%@=%@", appName, buildVersion);
-        userAgent = [userAgent stringByReplacingOccurrencesOfString:@"Mozilla" withString:[NSString stringWithFormat:@"%@/%@ Mozilla", appName, buildVersion]];
+        NSString *buildShortVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+        NSLog(@"%@=%@ & short=%@", appName, buildVersion, buildShortVersion);
+        userAgent = [userAgent stringByReplacingOccurrencesOfString:@"Mozilla" withString:[NSString stringWithFormat:@"%@/%@/%@ Mozilla", appName, buildVersion, buildShortVersion]];
         NSLog(@"userAgent >>> %@", userAgent);
     }
     return userAgent;
@@ -231,6 +252,22 @@
     [request start:requestURL :@"GET" :requestParams];
 }
 
++ (void)get:(id)calledClass :(NSString *)requestURL withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"GET" :nil];
+}
+
++ (void)get:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"GET" :requestParams];
+}
+
 /**
  * POSTメソッドでリクエスト
  */
@@ -251,6 +288,22 @@
     [request start:requestURL :@"POST" :requestParams :uploadData :fileName :contentType :dataKeyName];
 }
 
++ (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"POST" :requestParams];
+}
+
++ (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSData *)uploadData :(NSString *)fileName :(NSString *)contentType :(NSString *)dataKeyName withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"POST" :requestParams :uploadData :fileName :contentType :dataKeyName];
+}
+
 /**
  * POSTメソッドでファイルをアップロード
  */
@@ -258,6 +311,14 @@
 {
     Request *request = [[Request alloc] init];
     request.delegate = calledClass;
+    [request start:requestURL :@"POST" :requestParams :uploadFilePath];
+}
+
++ (void)post:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSURL *)uploadFilePath withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
     [request start:requestURL :@"POST" :requestParams :uploadFilePath];
 }
 
@@ -281,6 +342,22 @@
     [request start:requestURL :@"PUT" :requestParams :uploadData :fileName :contentType :dataKeyName];
 }
 
++ (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"PUT" :requestParams];
+}
+
++ (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSData *)uploadData :(NSString *)fileName :(NSString *)contentType :(NSString *)dataKeyName withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"PUT" :requestParams :uploadData :fileName :contentType :dataKeyName];
+}
+
 /**
  * PUTメソッドでファイルをアップロード
  */
@@ -288,6 +365,14 @@
 {
     Request *request = [[Request alloc] init];
     request.delegate = calledClass;
+    [request start:requestURL :@"PUT" :requestParams :uploadFilePath];
+}
+
++ (void)put:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams :(NSURL *)uploadFilePath withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
     [request start:requestURL :@"PUT" :requestParams :uploadFilePath];
 }
 
@@ -301,6 +386,14 @@
     [request start:requestURL :@"DELETE" :requestParams];
 }
 
++ (void)delete:(id)calledClass :(NSString *)requestURL :(NSMutableDictionary *)requestParams withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
+    [request start:requestURL :@"DELETE" :requestParams];
+}
+
 /**
  * HEADメソッドでリクエスト
  */
@@ -308,6 +401,14 @@
 {
     Request *request = [[Request alloc] init];
     request.delegate = calledClass;
+    [request start:requestURL :@"HEAD" :nil];
+}
+
++ (void)head:(id)calledClass :(NSString *)requestURL withCompletion:(RequestCompletionHandler)argCompletion;
+{
+    Request *request = [[Request alloc] init];
+    request.delegate = calledClass;
+    request.completion = argCompletion;
     [request start:requestURL :@"HEAD" :nil];
 }
 
@@ -322,13 +423,22 @@
 //expires: クッキーの有効期限(0は無限)
 + (void)setCookie:(NSString *)value forKey:(NSString *)key domain:(NSString *)domain
 {
+    // 現在日時
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    // 和暦回避
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneWithAbbreviation:@"GMT"]];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    [dateFormatter setCalendar:[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar]];
+    NSDate *expiredate = [dateFormatter dateFromString:[dateFormatter stringFromDate:[[NSDate date] dateByAddingTimeInterval:[DEFAULT_COOKIE_EXPIRED intValue]]]];
+    NSLog(@"expiredate=%@", [expiredate description]);
+
     //クッキーを作成
     NSDictionary *properties = [[NSMutableDictionary alloc] init];
     [properties setValue:[value stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]
                   forKey:NSHTTPCookieValue];
     [properties setValue:key forKey:NSHTTPCookieName];
     [properties setValue:domain forKey:NSHTTPCookieDomain];
-    [properties setValue:DEFAULT_COOKIE_EXPIRED forKey:NSHTTPCookieExpires];
+    [properties setValue:expiredate forKey:NSHTTPCookieExpires];
     [properties setValue:@"/" forKey:NSHTTPCookiePath];
     NSHTTPCookie *cookie = [[NSHTTPCookie alloc] initWithProperties:properties];
     
@@ -392,6 +502,15 @@
 
 #pragma mark - NSURLSessionDataDelegate関連
 
+- (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential *))completionHandler
+{
+    // 自己証明書
+    if([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]){
+        NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+        completionHandler(NSURLSessionAuthChallengeUseCredential,credential);
+    }
+}
+
 /* レスポンスヘッダー取得デレゲート(通信の実質的な終了) */
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
@@ -415,13 +534,16 @@
             responseHeader = (NSHTTPURLResponse *)task.response;
             // ステータスコードをとっておく
             statusCode = (int)responseHeader.statusCode;
-            NSLog(@"[statusCode] %d", statusCode);
+            NSLog(@"didCompleteWithError [statusCode] %d", statusCode);
             // HTTP 200 OK の場合
             // HTTP 201 Upload Success の場合
             if(statusCode == 200 || statusCode == 201 || statusCode == 202){
                 // 最新のCookieを常に保存しておく
                 [Request saveCookie];
                 // ステータスコード200で成功
+                if (self.completion) {
+                    self.completion(YES, statusCode, responseHeader, responseBody, nil);
+                }
                 if ([delegate respondsToSelector:@selector(didFinishSuccess::)]) {
                     [delegate didFinishSuccess:responseHeader :responseBody];
                 }
@@ -435,9 +557,12 @@
         // 通信エラー
         // 全ての通信で異常が発生
         // 例）DNS 名前解決に失敗 リクエストタイム レスポンスステータスコードが200と201以外が返された
-        NSLog(@"%@", [error localizedDescription]);
-        if ([delegate respondsToSelector:@selector(didFinishError::)]) {
-            [delegate didFinishError:responseHeader :error];
+        NSLog(@"didCompleteWithError %@", [error localizedDescription]);
+        if (self.completion) {
+            self.completion(NO, statusCode, responseHeader, responseBody, error);
+        }
+        if ([delegate respondsToSelector:@selector(didFinishError:::)]) {
+            [delegate didFinishError:responseHeader :responseBody :error];
         }
     }
 }
@@ -455,11 +580,16 @@
     }
     // レスポンスボディの有無を確認してみます
     if(data){
+        if(nil == responseBodyData){
+            // レスポンスボディの初期化をします
+            responseBodyData = [NSMutableData data];
+        }
+        [responseBodyData appendData:data];
         // レスポンスボディにreceiveDataを連結します
-        NSUInteger lengthData = [data length];
+        NSLog(@"responseData %@", [responseBodyData description]);
+        NSLog(@"[lengthData] %d", (int)[responseBodyData length]);
+        responseBody = [[NSString alloc] initWithData:responseBodyData encoding:NSUTF8StringEncoding];
         NSLog(@"responseData %@", [data description]);
-        NSLog(@"[lengthData] %d", (int)lengthData);
-        responseBody = [NSString stringWithFormat:@"%@%@", responseBody, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
         NSLog(@"[responseString length] %d", (int)[responseBody length]);
         NSLog(@"responseString %@", responseBody);
     }
@@ -477,8 +607,7 @@
     // totalBytesSent = 送信総量
     // totalBytesExpectedToSend = アップロードデータ量
     NSLog(@"[bytesSent] %lld, [totalBytesSent] %lld, [totalBytesExpectedToSend] %lld", bytesSent, totalBytesSent, totalBytesExpectedToSend);
-    double progress = (double)totalBytesSent / (double)totalBytesExpectedToSend;
-    NSLog(@"[progress] %f", progress);
+    NSLog(@"[progress] %f", ((double)totalBytesSent / (double)totalBytesExpectedToSend));
     // 呼び元に通信状況を返して上げる
     if([delegate respondsToSelector:@selector(didChangeProgress:::)]){
         [delegate didChangeProgress:(double)bytesSent :(double)totalBytesSent :(double)totalBytesExpectedToSend];

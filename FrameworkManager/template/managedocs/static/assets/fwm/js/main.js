@@ -2,7 +2,7 @@ var crudEnabled = false;
 $(document).ready(function() {
 	// ログインユーザーの名前を取得
 	$.ajax({
-		url: "api/me/user.json",
+		url: "xresouce/me/fwmuser.json",
 		dataType: "json",
 		cache: false,
 	}).done(function(json) {
@@ -11,7 +11,7 @@ $(document).ready(function() {
 	if(true != crudEnabled){
 		// プロジェクトの一覧を取得
 		$.ajax({
-			url: "api/project.json",
+			url: "xresouce/project.json",
 			dataType: "json",
 			cache: false,
 		}).done(function(json) {

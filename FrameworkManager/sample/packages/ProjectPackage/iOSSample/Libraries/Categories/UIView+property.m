@@ -1,7 +1,4 @@
 //
-//  NSObject+UIView_.m
-//  Footi
-//
 //  Created by saimushi on 2013/02/04.
 //  Copyright (c) 2013年 saimushi. All rights reserved.
 //

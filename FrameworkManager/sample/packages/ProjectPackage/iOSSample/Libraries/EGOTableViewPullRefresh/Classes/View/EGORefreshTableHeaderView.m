@@ -106,10 +106,11 @@
 		
 		[NSDateFormatter setDefaultFormatterBehavior:NSDateFormatterBehaviorDefault];
 		NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-		[dateFormatter setDateStyle:NSDateFormatterShortStyle];
-		[dateFormatter setTimeStyle:NSDateFormatterShortStyle];
+//		[dateFormatter setDateStyle:NSDateFormatterShortStyle];
+//		[dateFormatter setTimeStyle:NSDateFormatterShortStyle];
+        dateFormatter.dateFormat = NSLocalizedString(@"MM/dd/yy, HH:mm", @"MM/dd/yy, HH:mm");
 
-		_lastUpdatedLabel.text = [NSString stringWithFormat:@"Last Updated: %@", [dateFormatter stringFromDate:date]];
+		_lastUpdatedLabel.text = [NSString stringWithFormat:NSLocalizedString(@"Last Updated: %@", @"Last Updated: %@"), [dateFormatter stringFromDate:date]];
 		[[NSUserDefaults standardUserDefaults] setObject:_lastUpdatedLabel.text forKey:@"EGORefreshTableView_LastRefresh"];
 		[[NSUserDefaults standardUserDefaults] synchronize];
 		
@@ -179,7 +180,7 @@
 	if (_state == EGOOPullRefreshLoading) {
 		
 		CGFloat offset = MAX(scrollView.contentOffset.y * -1, 0);
-		// XXX Withly用にローディング表示停止位置をカスタマイズ 60を130に変更した
+		// XXX MyProject用にローディング表示停止位置をカスタマイズ 60を130に変更した
         offset = MIN(offset, 60);
 		scrollView.contentInset = UIEdgeInsetsMake(offset, 0.0f, 0.0f, 0.0f);
 		

@@ -49,7 +49,7 @@ class ProjectManager
 			if (isset($tmpPaths[1]) && 0 < strlen($tmpPaths[1])){
 				$baseURL = $documentRoot.'/'.$tmpPaths[1].'/lib/'.$newProjectName.'Package/apidocs/';
 			}
-			$iosdefineStr = str_replace('#define URL_BASE @"/workspace/UNICORN/src/lib/FrameworkManager/template/managedocs/"', '# define URL_BASE @"'.$baseURL.'"', $iosdefineStr);
+			$iosdefineStr = str_replace('#   define URL_BASE @"/workspace/UNICORN-project/lib/FrameworkManager/template/managedocs/api/"', '# define URL_BASE @"'.$baseURL.'"', $iosdefineStr);
 			// 新しい定義で書き換え
 			file_put_contents($movePath.'/iOSSample/Project/SupportingFiles/define.h', $iosdefineStr);
 			// 重いのでコマメにunset
@@ -70,8 +70,8 @@ class ProjectManager
 			$describes = $DBO->getTableDescribes($tables[$tblIdx]);
 			if(is_array($describes) && count($describes) > 0){
 				if ('iOS' === $argTargetPlatform){
-					$headerfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/emptyModel.h');
-					$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/emptyModel.m');
+					$headerfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/EmptyModelBase.h');
+					$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/EmptyModelBase.m');
 					$protected = '';
 					$public = '';
 					$synthesize = '';
@@ -122,9 +122,18 @@ class ProjectManager
 					$modelfile = str_replace('%reset%', $reset, $modelfile);
 					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'ModelBase.h', $headerfile);
 					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'ModelBase.m', $modelfile);
+					if (!is_file(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'Model.m')){
+						// まだ該当のモデルの最下層ファイルがなければ生成する
+						$headerfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/EmptyModel.h');
+						$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/EmptyModel.m');
+						$headerfile = str_replace('%modelName%', $modelName, $headerfile);
+						$modelfile = str_replace('%modelName%', $modelName, $modelfile);
+						file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'Model.h', $headerfile);
+						file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/Classes/Model/'.$modelName.'Model.m', $modelfile);
+					}
 				}
 				elseif ('android' === $argTargetPlatform){
-					$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/emptyModel.java');
+					$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/EmptyModelBase.java');
 					$public = '';
 					$flags = '';
 					$accesser = '';
@@ -168,7 +177,13 @@ class ProjectManager
 					$modelfile = str_replace('%convert%', $convert, $modelfile);
 					$modelfile = str_replace('%set%', $set, $modelfile);
 					$modelfile = str_replace('%reset%', $reset, $modelfile);
-					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/src/com/unicorn/model/'.$modelName.'ModelBase.m', $modelfile);
+					file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/src/com/unicorn/model/'.$modelName.'ModelBase.java', $modelfile);
+					if (!is_file(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/src/com/unicorn/model/'.$modelName.'Model.java')){
+						// まだ該当のモデルの最下層ファイルがなければ生成する
+						$modelfile = file_get_contents(getConfig('SAMPLE_PROJECT_PACKAGE_PATH', PROJECT_NAME).'/core/EmptyModel.java');
+						$modelfile = str_replace('%modelName%', $modelName, $modelfile);
+						file_put_contents(getConfig('PROJECT_ROOT_PATH', $argTargetProjectName).'/'.$argTargetPlatform.'Sample/Project/src/com/unicorn/model/'.$modelName.'Model.java', $modelfile);
+					}
 				}
 				elseif ('cocos' === $argTargetPlatform){
 					

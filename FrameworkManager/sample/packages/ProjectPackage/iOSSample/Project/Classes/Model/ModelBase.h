@@ -5,7 +5,6 @@
 //  Copyright (c) 2014年 saimushi. All rights reserved.
 //
 
-typedef void(^RequestCompletionHandler)(BOOL success, NSInteger statusCode, NSHTTPURLResponse *responseHeader, NSString *responseBody, NSError* error);
 
 // モデル参照モード
 typedef enum{
@@ -14,8 +13,21 @@ typedef enum{
 	automaticResource,
 } loadResourceMode;
 
+// 通信パケット監視用クラス
+@interface ProgressAgent : NSObject
+{
+    double packetSentBytes;
+    double totalSentBytes;
+    double totalBytes;
+}
+@property (nonatomic) double packetSentBytes;
+@property (nonatomic) double totalSentBytes;
+@property (nonatomic) double totalBytes;
+@end
+
 
 #import "Request.h"
+#import "SBJsonAgent.h"
 
 @protocol ModelDelegate;
 
@@ -29,13 +41,17 @@ typedef enum{
     NSString *cryptIV;
     int timeout;
     NSString *tokenKeyName;
+    NSString *deviceTokenKeyName;
     NSString *modelName;
     NSString *ID;
     // 自分のリソースを参照する場合の修飾子（デフォルトでは必ず自分のリソース参照となるので、loadやsaveの際に空文字を入れて下さい）
     NSString *myResourcePrefix;
+    // リクエストメソッド
+    NSString *requestMethod;
     // モデルは原則配列を許容する
     int index;
     int total;
+    int records;
     NSMutableArray *list;
     // 通信に関する変数
     BOOL replaced;
@@ -54,6 +70,7 @@ typedef enum{
 @property (strong, nonatomic) NSString *ID;
 @property (nonatomic) int index;
 @property (nonatomic) int total;
+@property (nonatomic) int records;
 @property (strong, nonatomic) id<ModelDelegate> delegate;
 
 /* シングルトンでModelクラスを受け取る */
@@ -66,6 +83,7 @@ typedef enum{
 /* XXX また、暗号化鍵を渡さないでinitする場合は、- (NSString *)createToken; をオーバーライドして下さい！ */
 - (id)init:(NSString *)argProtocol :(NSString *)argDomain :(NSString *)argURLBase :(NSString *)argTokenKeyName :(NSString *)argCryptKey :(NSString *)argCryptIV;
 - (id)init:(NSString *)argProtocol :(NSString *)argDomain :(NSString *)argURLBase :(NSString *)argTokenKeyName :(NSString *)argCryptKey :(NSString *)argCryptIV :(int)argTimeout;
+- (id)init:(NSString *)argProtocol :(NSString *)argDomain :(NSString *)argURLBase :(NSString *)argTokenKeyName :(NSString *)argCryptKey :(NSString *)argCryptIV :(NSString *)argDeviceTokenKeyName :(int)argTimeout;
 
 /* モデルのデータを外部からJSON配列のまま貰ってModelの最初期化を行えるようにするモデルデータのアクセサ */
 - (void)setModelData:(NSMutableArray *)argDataArray;
@@ -115,6 +133,21 @@ typedef enum{
 /* 端末固有IDの読み込み */
 + (NSString *)loadIdentifier:(NSString *)argCryptKey :(NSString *)argCryptIV;
 
+/* レコード所有者IDの保存 */
++ (void)saveOwnerID:(NSString *)argIdentifier :(NSString *)argCryptKey :(NSString *)argCryptIV;
+/* レコード所有者IDの読み込み */
++ (NSString *)loadOwnerID:(NSString *)argCryptKey :(NSString *)argCryptIV;
+
+/* レコード所有者IDの保存 */
++ (void)saveOwnerName:(NSString *)argIdentifier :(NSString *)argCryptKey :(NSString *)argCryptIV;
+/* レコード所有者IDの読み込み */
++ (NSString *)loadOwnerName:(NSString *)argCryptKey :(NSString *)argCryptIV;
+
+/* レコード所有者画像URLの保存 */
++ (void)saveOwnerImageURL:(NSString *)argIdentifier :(NSString *)argCryptKey :(NSString *)argCryptIV;
+/* レコード所有者画像URLの読み込み */
++ (NSString *)loadOwnerImageURL:(NSString *)argCryptKey :(NSString *)argCryptIV;
+
 /* デバイストークンの保存 */
 + (void)saveDeviceTokenString:(NSString *)argDeviceTokenString;
 + (void)saveDeviceTokenData:(NSData *)argDeviceTokenData;
@@ -125,6 +158,7 @@ typedef enum{
 - (BOOL)next;
 - (id)objectAtIndex:(int)argIndex;
 - (void)insertObject:(ModelBase *)argModel :(int)argIndex;
+- (void)replaceObject:(ModelBase *)argModel :(int)argIndex;
 - (void)addObject:(ModelBase *)argModel;
 - (void)removeObjectAtIndex:(int)argIndex;
 
@@ -147,8 +181,12 @@ typedef enum{
 @protocol ModelDelegate  <NSObject>
 
 @optional
+- (void)didReceiveValidateError:(NSString *)argValidateErrorMsg;
+- (void)didReceiveMustUpdate:(NSString *)argUpdateURL;
+- (void)didReceiveAppBadgeNum:(NSString *)argBadgeNumStr;
+- (void)didReceiveNotifyMessage:(NSString *)argNotifyMessage;
 - (void)didFinishSuccess:(ModelBase*)model :(NSHTTPURLResponse *)responseHeader :(NSString *)responseBody;
-- (void)didFinishError:(ModelBase*)model :(NSHTTPURLResponse *)responseHeader :(NSError *)failedHandler;
-- (void)didChangeProgress:(ModelBase*)model :(double)packetBytesSent :(double)totalBytesSent :(double)totalBytesExpectedToSend;
+- (void)didFinishError:(ModelBase*)model :(NSHTTPURLResponse *)responseHeader :(NSString *)responseBody :(NSError *)failedHandler;
+- (void)didChangeProgress:(ModelBase*)model :(ProgressAgent *)progressAgent;
 
 @end
