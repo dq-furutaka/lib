@@ -32,7 +32,7 @@
 
     // ナビゲーションバーのスタイルを定義しておく
     // ナビゲーションバーの全体の色指定
-    [[UINavigationBar appearance] setBarTintColor:RGBA(113, 113, 113, 1)];
+    [[UINavigationBar appearance] setBarTintColor:RGBA(30, 30, 30, 1)];
     // ナビゲーションバーのボタンアイテムのテキストカラー指定
     [[UINavigationBar appearance] setTintColor:[UIColor whiteColor]];
     // ナビゲーションバーのタイトルテキストカラー指定
@@ -42,9 +42,9 @@
     // タブバーの背景色指定
     [[UITabBar appearance] setBarTintColor:[UINavigationBar appearance].barTintColor];
     // タブバーのタイトルテキストカラー指定
-    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]} forState:UIControlStateNormal];
+    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor lightGrayColor]} forState:UIControlStateNormal];
     // タブバーの選択色指定
-    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor blueColor]} forState:UIControlStateSelected];
+    [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]} forState:UIControlStateSelected];
 
     // TabbarItemの数だけUINavigationControllerのインスタンスを生成
     self.topViewController = [[TopViewController alloc] init];
