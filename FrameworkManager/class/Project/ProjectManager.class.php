@@ -49,7 +49,7 @@ class ProjectManager
 			if (isset($tmpPaths[1]) && 0 < strlen($tmpPaths[1])){
 				$baseURL = $documentRoot.'/'.$tmpPaths[1].'/lib/'.$newProjectName.'Package/apidocs/';
 			}
-			$iosdefineStr = str_replace('#   define URL_BASE @"/workspace/UNICORN-project/lib/FrameworkManager/template/managedocs/api/"', '# define URL_BASE @"'.$baseURL.'"', $iosdefineStr);
+			$iosdefineStr = str_replace('#   define URL_BASE @"/workspace/UNICORN-project/lib/FrameworkManager/template/managedocs/api/"', '#   define URL_BASE @"'.$baseURL.'"', $iosdefineStr);
 			// 新しい定義で書き換え
 			file_put_contents($movePath.'/iOSSample/Project/SupportingFiles/define.h', $iosdefineStr);
 			// 重いのでコマメにunset
