@@ -3272,17 +3272,6 @@ elseif(isset($_GET["a"])){
 				file_put_contents($_POST["newfwmdocpath"]."/index.php", $file);
 			}
 
-			// 移動が終わったらベースURLを書き出す
-			if("UNICORN" === PROJECT_NAME) {
-				$fwmConfXML->FrameworkManager->BASE_URL = array();
-				$fwmConfXML->FrameworkManager->BASE_URL[0] = $_POST["fwmurl"];
-				$fwmConfXML->FrameworkManager->BASE_URL[0]->addAttribute("stage", "local");
-				$fwmConfXML->FrameworkManager->BASE_URL[1] = $_POST["fwmurl"];
-				$fwmConfXML->FrameworkManager->BASE_URL[1]->addAttribute("stage", "test");
-				$fwmConfXML->FrameworkManager->BASE_URL[2] = $_POST["fwmurl"];
-				$fwmConfXML->asXML($fwmConfXMLPath);
-			}
-
 			// フレームワークマネージャーの移動の正常終了
 			exit(json_encode($res));
 		}

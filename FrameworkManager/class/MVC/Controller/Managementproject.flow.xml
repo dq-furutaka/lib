@@ -396,7 +396,7 @@
 					<else>
 						<for iterate="$tblidx=0" iterator="$tblidx &lt; count($tables)" iteration="$tblidx++">
 							<assign var="query" val="trim($tables[$tblidx])"/>
-							<if condition="0 === strpos(strtoupper($query), 'CREATE ') || 0 === strpos(strtoupper($query), 'ARTER ')">
+							<if condition="0 === strpos(strtoupper($query), 'CREATE ') || 0 === strpos(strtoupper($query), 'ARTER ') || 0 === strpos(strtoupper($query), 'INSERT ')">
 								<assign var="res" instance="DBO" method="execute" arg1="$query"/>
 								<if condition="false === $res">
 									<flowpostformsectionerror>CreateTableに失敗しました</flowpostformsectionerror>
