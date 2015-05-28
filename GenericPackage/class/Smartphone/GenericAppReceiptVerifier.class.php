@@ -255,6 +255,10 @@ class GenericAppReceiptVerifier
 				// 有効である
 				$result['last_receipt'] = base64_decode($argBase64EncodedReceipt);;
 			}
+			else {
+				// SSLヴェリファイ失敗
+				return FALSE;
+			}
 		}
 		else {
 			// ターゲット不明
