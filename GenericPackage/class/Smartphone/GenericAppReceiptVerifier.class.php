@@ -256,7 +256,7 @@ class GenericAppReceiptVerifier
 				$result['last_receipt'] = base64_decode($argBase64EncodedReceipt);;
 			}
 			else {
-				// SSLヴェリファイ失敗
+				// 署名が正しくない(0)またはエラー(-1)
 				return FALSE;
 			}
 		}
