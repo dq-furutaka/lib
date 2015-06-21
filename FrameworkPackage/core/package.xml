@@ -123,11 +123,23 @@
 	<MCO>
 		<link mapfrom="GenericMemcache" mapto="MCO">default.implement.KVS/GenericMemcache.class.php</link>
 	</MCO>
+	<PsychoFrame>
+		<package>DBO</package>
+		<link renamefrom="GenericModel" renameto="Model">default.interface.ORM/GenericModel</link>
+		<link mapfrom="GenericModelBase" mapto="ModelBase">default.abstract.ORM/GenericModelBase</link>
+		<link mapfrom="GenericORMapper" mapto="PsychoFrame">default.implement.ORM/GenericORMapper</link>
+	</PsychoFrame>
+	<PsychoJack>
+		<package>DBO</package>
+		<package>PsychoFrame</package>
+		<link mapfrom="GenericMigrationBase" mapto="MigrationBase">default.abstract.ORM/GenericMigrationBase</link>
+		<link mapfrom="GenericMigrationManager" mapto="MigrationManager">default.implement.ORM/GenericMigrationManager</link>
+	</PsychoJack>
 	<ORMapper>
 		<package>DBO</package>
 		<link renamefrom="GenericModel" renameto="Model">default.interface.ORM/GenericModel</link>
 		<link mapfrom="GenericModelBase" mapto="ModelBase">default.abstract.ORM/GenericModelBase</link>
-		<link mapfrom="GenericORMapper" mapto="ORMapper">default.implement.ORM/GenericORMapper</link>
+		<link mapfrom="GenericORMapper" mapto="PsychoFrame">default.implement.ORM/GenericORMapper</link>
 	</ORMapper>
 	<MigrationManager>
 		<package>DBO</package>
