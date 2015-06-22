@@ -23,20 +23,17 @@
 {
     self = [super init];
     if(self != nil){
-        screenName = @"UIViewControllerBase";
         isNavigateion = YES;
     }
     return self;
 }
 
-- (void)loadView
-{
-    [super loadView];
-}
-
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    if (nil == screenName){
+        screenName = @"UIViewControllerBase";
+    }
 //    [TrackingManager sendScreenTracking:screenName];
     viewStayStartTime = [NSDate date];
     if (isNavigateion){

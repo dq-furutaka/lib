@@ -110,10 +110,15 @@ class GenericORMapper {
 				if(function_exists('getAutoMigrationEnabled') && TRUE === getAutoMigrationEnabled()){
 					// 定義の更新が無いか確認し、あれば新しいマイグレーションファイルを生成
 					MigrationManager::resolve($argDBO, $tableName, $lastMigrationHash);
-					if(function_exists('getAutoMigrationEnabled') && TRUE === getAutoGenerateEnabled()){
-						@file_put_contents($generatedModelFilePath, '<?php'.PHP_EOL.PHP_EOL.$baseModelClassDefine.PHP_EOL.PHP_EOL.'?>');
-						@chmod($argGeneratedPath, 0777);
-					}
+				}
+				// オートジェネレートが有効だった場合
+				if(function_exists('getAutoGenerateEnabled') && TRUE === getAutoGenerateEnabled()){
+					@file_put_contents($generatedModelFilePath, '<?php'.PHP_EOL.PHP_EOL.$baseModelClassDefine.PHP_EOL.PHP_EOL.'?>');
+					@chmod($argGeneratedPath, 0777);
+				}
+				// ローカル環境の時はクライアントモデルをオートでジェネレートしてあげる
+				if(false === is_file(getConfig('PROJECT_ROOT_PATH').'.manager') && 1 === getLocalEnabled()){
+					AppMigrationManager::generateModel($argDBO, $tableName);
 				}
 			}
 		}

@@ -14,5 +14,7 @@
 }
 
 // Public
+@property (weak, nonatomic) IBOutlet UITableView *dataListView;
+
 
 @end

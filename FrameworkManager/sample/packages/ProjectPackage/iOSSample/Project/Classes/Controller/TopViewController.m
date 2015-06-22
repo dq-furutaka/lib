@@ -7,14 +7,11 @@
 
 #import "TopViewController.h"
 #import "SampleModel.h"
-#import "NodataCellView.h"
-#import "SampleCellView.h"
 
 @interface TopViewController ()
 {
     // Private
     BOOL _loading;
-    UITableView *dataListView;
     EGORefreshTableHeaderView *_refreshHeaderView;
     SampleModel *data;
 }
@@ -22,47 +19,19 @@
 
 @implementation TopViewController
 
-- (id)init
-{
-    self = [super init];
-    if(self != nil){
-        _loading = NO;
-        // デフォルトのスクリーン名をセット
-        screenName = @"トップ";
-        // モデルクラス初期化
-        data = [[SampleModel alloc] init];
-    }
-    return self;
-}
-
-- (void)loadView
-{
-    [super loadView];
-    self.edgesForExtendedLayout = UIRectEdgeNone;
-  
-    // TableView
-    dataListView = [[UITableView alloc] init];
-    // フレーム
-    dataListView.frame = CGRectMake(0, 0, self.view.width, self.view.height - self.navigationController.navigationBar.frame.size.height - 64 - 5);
-    dataListView.delegate = self;
-    dataListView.dataSource = self;
-    dataListView.backgroundColor = [UIColor clearColor];
-    dataListView.separatorStyle = UITableViewCellSeparatorStyleNone;
-    dataListView.scrollsToTop = YES;
-    dataListView.allowsSelection = NO;
-
-    // PullDownToRefresh
-    _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - dataListView.bounds.size.height, self.view.frame.size.width, dataListView.bounds.size.height)];
-    _refreshHeaderView.delegate = self;
-    _refreshHeaderView.backgroundColor = [UIColor clearColor];
-    [dataListView addSubview:_refreshHeaderView];
-    
-    [self.view addSubview:dataListView];
-}
-
 - (void)viewDidLoad
 {
+    _loading = NO;
+    // デフォルトのスクリーン名をセット
+    screenName = self.navigationItem.title;
+    // モデルクラス初期化
+    data = [[SampleModel alloc] init];
     [super viewDidLoad];
+    // PullDownToRefresh
+    _refreshHeaderView = [[EGORefreshTableHeaderView alloc] initWithFrame:CGRectMake(0.0f, 0.0f - self.dataListView.bounds.size.height, self.dataListView.frame.size.width, self.dataListView.bounds.size.height)];
+    _refreshHeaderView.delegate = self;
+    _refreshHeaderView.backgroundColor = [UIColor clearColor];
+    [self.dataListView addSubview:_refreshHeaderView];
     [self dataListLoad];
 }
 
@@ -89,7 +58,7 @@
     [data list:^(BOOL success, NSInteger statusCode, NSHTTPURLResponse *responseHeader, NSString *responseBody, NSError *error) {
         if(YES == success){
             // 正常終了時 テーブルView Refresh
-            [dataListView reloadData];
+            [self.dataListView reloadData];
         }
         else {
             // エラー処理をするならココ
@@ -97,7 +66,7 @@
         // Pull to Refleshを止める
         _loading = NO;
         [APPDELEGATE hideLoading];
-        [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:dataListView];
+        [_refreshHeaderView egoRefreshScrollViewDataSourceDidFinishedLoading:self.dataListView];
     }];
 }
 
@@ -122,7 +91,7 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (0 < data.total) {
-        return 50;
+        return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"topTableCell"].frame.size.height;
     }
     // デフォルトのEmpty表示用
     return tableView.height;
@@ -139,24 +108,38 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[NSString stringWithFormat:@"Identifier-%d-%d", (int) indexPath.section, (int)indexPath.row]];
-    CGRect cellRect = CGRectMake(0, 0, self.view.width, [self tableView:tableView heightForRowAtIndexPath:indexPath]);
-    cell.backgroundColor = [UIColor clearColor];
+    UITableViewCell *cell = nil;
     if(0 < data.total){
-        // SampleModelデータ表示用Viewをセット
-        [cell.contentView addSubview:[[SampleCellView alloc] initWithFrame:cellRect WithSampleModel:[data objectAtIndex:(int)indexPath.row]]];
+        if (cell == nil) {
+            cell = [tableView dequeueReusableCellWithIdentifier:@"topTableCell" forIndexPath:indexPath];
+        }
+        SampleModel *sampleModel = [data objectAtIndex:(int)indexPath.row];
+        // レコード名
+        ((UILabel *)[cell.contentView viewWithTag:1]).text = sampleModel.name;
+        // 日時
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = sampleModel.modified;
     }
     else {
-        // 0件表示用Viewをセット
-        [cell.contentView addSubview:[[NodataCellView alloc] initWithFrame:cellRect]];
+        if (cell == nil) {
+            cell = [tableView dequeueReusableCellWithIdentifier:@"NodataCell"];
+        }
+        UIView *NodataCellView = (UIView *)[[[NSBundle mainBundle] loadNibNamed:@"NodataCellView" owner:nil options:0] firstObject];
+        NodataCellView.width = tableView.width;
+        NodataCellView.height = tableView.height;
+        [cell.contentView addSubview:NodataCellView];
     }
     return cell;
+}
+
+-(void)tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    // 選択解除
+    [tableView deselectRowAtIndexPath:indexPath animated:NO];
 }
 
 -(void)tableView:(UITableView*)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if(0 < data.total && data.total < data.records){
-//        int rowMax = (int)tableView.height / (int)[self tableView:tableView heightForRowAtIndexPath:[NSIndexPath indexPathForRow:1 inSection:1]];
         if(YES == (((int)indexPath.row) + 1 >= data.total)){
             // 追加読み込み
             [self dataListAddLoad];
