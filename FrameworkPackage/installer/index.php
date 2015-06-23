@@ -1445,11 +1445,11 @@ $(document).ready(function(){
 	$("#input-mysqluser").val("root");
 	$("#input-mysqlpass").val("root");
 	<?php if("UNICORN" === PROJECT_NAME) { ?>
-	$("#input-fwmdbuser").val("fwm");
+	$("#input-fwmdbuser").val("fwmuser");
 	$("#input-fwmdbpass").val("fwmpass");
 	$("#input-fwmdb").val("fwm");
 	<?php } else { ?>
-	$("#input-fwmdbuser").val("project");
+	$("#input-fwmdbuser").val("projectuser");
 	$("#input-fwmdbpass").val("projectpass");
 	$("#input-fwmdb").val("project");
 	<?php } ?>
@@ -3338,7 +3338,7 @@ else if(null !== $argv){
 		echo "提供次期は未定です。".PHP_EOL;
 		echo PHP_EOL;
 		echo "Webブラウザベースでのインストーラーを利用して下さい。".PHP_EOL;
-		echo "http://[あなたのドメイン]/[あなたがフレームワークを配置したworkspaceディレクトリパス]/installer.php".PHP_EOL;
+		echo "http://[あなたのドメイン]/[あなたがフレームワークを配置したworkspaceディレクトリパス]/installe/".PHP_EOL;
 		echo "上記URLを適宜変更し、Webブラウザからアクセスして下さい。".PHP_EOL;
 		echo "あなたの望む結果がきっと得られます。".PHP_EOL;
 		echo PHP_EOL;
