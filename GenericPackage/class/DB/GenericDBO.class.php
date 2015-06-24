@@ -263,7 +263,7 @@ class GenericDBO {
 		if(FALSE !== strpos(strtolower($argQuery), "update") || FALSE !== strpos(strtolower($argQuery), "insert") || FALSE !== strpos(strtolower($argQuery), "delete")){
 			self::begin();
 		}
-		else if (0 === strpos(strtolower($argQuery), "select") || 0 === strpos(strtolower($argQuery), "show")){
+		else if (0 === strpos(strtolower(trim($argQuery)), "select") || 0 === strpos(strtolower(trim($argQuery)), "show")){
 			// リーダブルDBを探してみる
 			$instanceIndex = self::_initDB(TRUE);
 		}
@@ -272,6 +272,7 @@ class GenericDBO {
 			// 新ADODB用の対応
 			$argBinds = FALSE;
 		}
+		logging($instanceIndex, "query");
 		logging(self::$_DSN[$instanceIndex], "query");
 		logging($argQuery . PHP_EOL . var_export($argBinds, TRUE), "query");
 		$response = self::$_DBInstance[$instanceIndex]->Execute($argQuery, $argBinds);
