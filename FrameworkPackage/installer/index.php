@@ -2752,7 +2752,7 @@ elseif(isset($_GET["a"])){
 					for($didx=0; $didx < $depth; $didx++){
 						$pathCode = "dirname(".$pathCode.")";
 					}
-					// CDATAで追加追加
+					// CDATAで追加
 					// XXX 空にしとく
 					$confXML->ROOT_PATH = "";
 					$node = dom_import_simplexml($confXML->ROOT_PATH);
@@ -3338,7 +3338,7 @@ else if(null !== $argv){
 		echo "提供次期は未定です。".PHP_EOL;
 		echo PHP_EOL;
 		echo "Webブラウザベースでのインストーラーを利用して下さい。".PHP_EOL;
-		echo "http://[あなたのドメイン]/[あなたがフレームワークを配置したworkspaceディレクトリパス]/installe/".PHP_EOL;
+		echo "http://[あなたのドメイン]/[あなたがフレームワークを配置したworkspaceディレクトリパス]/installer.php".PHP_EOL;
 		echo "上記URLを適宜変更し、Webブラウザからアクセスして下さい。".PHP_EOL;
 		echo "あなたの望む結果がきっと得られます。".PHP_EOL;
 		echo PHP_EOL;

@@ -6,6 +6,7 @@ class AppMigrationManager {
 		$modelName = str_replace ( ' ', '', ucwords ( str_replace ( '_', ' ', $tableName ) ) );
 		$describes = $argDBO->getTableDescribes ( $argTblName );
 		if (is_array ( $describes ) && count ( $describes ) > 0) {
+			debug('AppModel '.$tableName.' '.$argTargetProjectName);
 			if (NULL === $argTargetPlatform || 'iOS' === $argTargetPlatform) {
 				$headerfile = file_get_contents ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetProjectName ) . '/core/EmptyModelBase.h' );
 				$modelfile = file_get_contents ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetProjectName ) . '/core/EmptyModelBase.m' );
@@ -70,7 +71,7 @@ class AppMigrationManager {
 				}
 			}
 			if (NULL === $argTargetPlatform || 'android' === $argTargetPlatform) {
-				$modelfile = file_get_contents ( getConfig ( 'SAMPLE_PROJECT_PACKAGE_PATH', $argTargetPlatform ) . '/core/EmptyModelBase.java' );
+				$modelfile = file_get_contents ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetPlatform ) . '/core/EmptyModelBase.java' );
 				$public = '';
 				$flags = '';
 				$accesser = '';
@@ -117,7 +118,7 @@ class AppMigrationManager {
 				file_put_contents ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetProjectName ) . '/androidSample/Project/src/com/unicorn/model/' . $modelName . 'ModelBase.java', $modelfile );
 				if (! is_file ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetProjectName ) . '/androidSample/Project/src/com/unicorn/model/' . $modelName . 'Model.java' )) {
 					// まだ該当のモデルの最下層ファイルがなければ生成する
-					$modelfile = file_get_contents ( getConfig ( 'SAMPLE_PROJECT_PACKAGE_PATH', $argTargetPlatform ) . '/core/EmptyModel.java' );
+					$modelfile = file_get_contents ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetPlatform ) . '/core/EmptyModel.java' );
 					$modelfile = str_replace ( '%modelName%', $modelName, $modelfile );
 					file_put_contents ( getConfig ( 'PROJECT_ROOT_PATH', $argTargetProjectName ) . '/androidSample/Project/src/com/unicorn/model/' . $modelName . 'Model.java', $modelfile );
 				}
