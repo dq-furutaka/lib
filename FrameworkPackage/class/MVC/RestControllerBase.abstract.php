@@ -701,6 +701,9 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 							if (!isset($whiteList[$resourcePath])){
 								$whiteList[$resourcePath] = array("Method ".$this->requestMethod => NULL);
 							}
+							if (!isset($whiteList[$resourcePath]["Method ".$this->requestMethod])){
+								$whiteList[$resourcePath]["Method ".$this->requestMethod] = NULL;
+							}
 							if ('*' !== $allowUser){
 								if (!is_array($whiteList[$resourcePath]["Method ".$this->requestMethod])){
 									$whiteList[$resourcePath]["Method ".$this->requestMethod] = array();
