@@ -695,7 +695,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 						if (isset($this->AuthUser) && NULL !== $this->AuthUser && 0 < strlen($this->AuthUser->tableName)){
 							$allowUser = $this->AuthUser->tableName;
 						}
-						if (!isTest()){
+						if (isTest()){
 							// テスト環境の場合は、ホワイトフィルターを育てる処理
 							$updateWhiteList = FALSE;
 							if (!isset($whiteList[$resourcePath])){
