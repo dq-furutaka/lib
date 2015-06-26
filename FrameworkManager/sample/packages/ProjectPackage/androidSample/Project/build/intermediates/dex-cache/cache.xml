@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-games/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="055783146ba9654a725442563be78cad303aad1f">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-e867937c9995539254739f456dca811c8647aad3.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appstate/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="7ff613bf78ab057293892fdbd4169eda899c89b9">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-eb2699ca29397447441b768f9492719363bef1c4.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="29fd6d3794b71491c2789708cd8d03c71feb8954">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-4dded3907c3f2f30b13d613498915c17b0da3650.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-gcm/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="9224bc4c54ba95147c7eabd874573763c07cb6be">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-210fc9332a4f71e314197f1337cbf220c883eb62.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-nearby/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="ef5f051e7308febe289dc93c67c5f32785b4260a">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-7abb07c6406c0085a919fb527f84cb8952293872.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-cast/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="4cd0b093824b3228fffc21ea369b98d0b1db6566">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-b7ef1d8f3993df58fcab2c09388d171789a35c2f.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-drive/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="41b3870cbe5fa546d8095b5b89d42cb69f3dd175">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-25d34b514eebee9e0bfcfd3125dca50aeddca5b0.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/android-sdk/extras/android/m2repository/com/android/support/support-annotations/22.0.0/support-annotations-22.0.0.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="685d0b2c590447e85284ed84712cb363ba04eff8">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/support-annotations-22.0.0-25660bbb22fd424ba7d37f05369e16b307d3cbfa.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.0.0/libs/internal_impl-22.0.0.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="b5b92f469d515a13d778900f6d50c03d12f35504">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/internal_impl-22.0.0-a6474fe8d1d6f104c549fd731a769ea5df12acbe.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/libs/httpcore-4.3.2.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="31fbbff1ddbf98f3aa7377c94d33b0447c646b6e">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/httpcore-4.3.2-845c3c2f43896dd02d92f778aadc2af535ae5638.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-identity/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="fb04b12526b0073c7fb1ebb70c5842d82ee95596">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-af434f6eb42e67b5699ca1ce9530323646088e19.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-safetynet/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="c976518693e89ad44fbfccfc654941eaec198d08">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-f083ad3b3611a88a077395e7a299f540cabf3fde.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.android.support/support-v4/22.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="4e86306289ace4aa0cfec44a05ed2b410d36989d">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-d0c9828accf352b48e49511f2371bce147fb6387.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-maps/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="17f8750d5c0749e44dd7c54aa390d9c937803825">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-737b7a75108d5f19b69e140b403759963efc9274.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appindexing/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="a08d65794b844d8e7540bf9a33859bf3b2482d7f">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-5878a93eb55a685ebb591ca2c3a8c0a86eaf5410.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-wallet/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="a96b762bde4139de855735f175ec4d17dca55a6d">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-5687fed0517583382f4f6f4ce5a5a7d0ab61b1db.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="4c93d99d454c975536bbe3b42283eee847f03ea3">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-27a19480d4cd2edf7cb13e2e44f337e75faa6be4.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-wearable/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="3033cc3a2c68dff3e5b646d6d084bdbdf7d00b25">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-747cca212daddb8090195049579a16c1bf20830b.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/libs/httpmime-4.3.5.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="1dd0d38df9c6d21e893f2e52403f1cd99e91cd81">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/httpmime-4.3.5-ec9eb6b662eacce173cf8efe35f49024653fea34.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-location/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="73ccb92b70112f2e463e415ef8d7275de7da6516">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-63d097876740f963721cc4a169d90cada8c7b4ff.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-panorama/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="1c5a76debf0c2857ccad422c4a80ed785982f8df">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-105863a6d5fd9f15fadf93e15e4c02c6bd688fb2.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="e3d791b42eaa90416cd0b2d2e608092794a3baa4">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-fbe21b2ed3248dc47e2a64b093ff896586644240.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-plus/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="0e8228b4bc69c6a2c8d7c18498a77e53417d2574">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-0469d018c70bd9c3ebef6c5487fd7c36f4610a61.jar" />
+    </item>
+    <item
+        jar="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-fitness/7.0.0/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="3c0b099f9de16b265ecd6122fcb603e7d0d29f90">
+        <dex dex="/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/build/intermediates/pre-dexed/debug/classes-a59fe8b656e697a32c279005a726422edb9a2d63.jar" />
+    </item>
+
+</items>

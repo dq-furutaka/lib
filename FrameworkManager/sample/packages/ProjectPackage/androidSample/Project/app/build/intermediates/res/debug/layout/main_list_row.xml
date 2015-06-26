@@ -1,0 +1,25 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="100dp">
+
+    <ImageView android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:id="@+id/main_list_image"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="10dp"
+        >
+    </ImageView>
+    
+    <TextView android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/main_list_name"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@id/main_list_image"
+        android:layout_centerVertical="true"
+        android:text="aaa">
+        
+    </TextView>
+
+</RelativeLayout>
+<!-- From: file:/Users/c1363/Documents/workspace/lib/FrameworkManager/sample/packages/ProjectPackage/androidSample/Project/app/src/main/res/layout/main_list_row.xml -->
