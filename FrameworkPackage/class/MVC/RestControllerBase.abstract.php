@@ -690,27 +690,26 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 					else {
 						debug("whitelistcheck isTest=". var_export(isTest(), true));
 						debug("whitelistcheck whiteList=". var_export($whiteList, true));
+						$paramKeys = array_keys($this->getRequestParams());
 						$allowUser = '*';
 						if (isset($this->AuthUser) && NULL !== $this->AuthUser && 0 < strlen($this->AuthUser->tableName)){
 							$allowUser = $this->AuthUser->tableName;
 						}
-						if (isTest()){
+						if (!isTest()){
 							// テスト環境の場合は、ホワイトフィルターを育てる処理
 							$updateWhiteList = FALSE;
 							if (!isset($whiteList[$resourcePath])){
-								$whiteList[$resourcePath] = array($this->requestMethod => NULL);
+								$whiteList[$resourcePath] = array("Method ".$this->requestMethod => NULL);
 							}
 							if ('*' !== $allowUser){
-								if (!is_array($whiteList[$resourcePath][$this->requestMethod])){
-									$whiteList[$resourcePath][$this->requestMethod] = array();
+								if (!is_array($whiteList[$resourcePath]["Method ".$this->requestMethod])){
+									$whiteList[$resourcePath]["Method ".$this->requestMethod] = array();
 								}
-								if (!in_array($allowUser, $whiteList[$resourcePath][$this->requestMethod])){
-									// ホワイトリストに追加
-									$whiteList[$resourcePath][$this->requestMethod][] = $allowUser;
-								}
+								// ホワイトリストに追加
+								$whiteList[$resourcePath]["Method ".$this->requestMethod][$allowUser] = $paramKeys;
 							}
 							else{
-								$whiteList[$resourcePath][$this->requestMethod] = $allowUser;
+								$whiteList[$resourcePath]["Method ".$this->requestMethod] = $allowUser;
 							}
 							$newWhiteList = json_encode($whiteList);
 							debug("whitelistcheck new whiteList=". $newWhiteList);
@@ -718,23 +717,28 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 							// Configに書き出す
 							if ($nowWhiteList != $newWhiteList){
 								debug("whitelistcheck modify whiteList=". $newWhiteList);
-								modifiyConfig('REST_RESOURCE_WHITE_LIST', PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.str_replace(":{\"", ":".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB."{\"", str_replace("},\"", "},".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB."\"", str_replace("}}", "}".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB."}", json_encode($whiteList)))).PHP_EOL.PHP_TAB.PHP_TAB);
+								modifiyConfig('REST_RESOURCE_WHITE_LIST', PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.
+									str_replace("\"]},\"Method ", "\"]}".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB.",\"Method ", 
+										str_replace("\":{\"", "\":".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB."{\"", 
+											str_replace(":{\"Method ", ":".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB."{\"Method ", 
+												str_replace("}}", "}".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB."}", 
+													str_replace("\"]}}", "\"]}".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB.PHP_TAB."}".PHP_EOL.PHP_TAB.PHP_TAB.PHP_TAB, json_encode($whiteList)))))).PHP_EOL.PHP_TAB.PHP_TAB);
 							}
 						}
 						else {
 							debug("whitelistcheck new is??");
 							// ホワイトリストによるリソースアクセスチェック！
-							if (!(isset($whiteList[$resourcePath]) && isset($whiteList[$resourcePath][$this->requestMethod]))){
+							if (!(isset($whiteList[$resourcePath]) && isset($whiteList[$resourcePath]["Method ".$this->requestMethod]))){
 								// アクセスエラー！
 								throw new RESTException(__CLASS__.PATH_SEPARATOR.__METHOD__.PATH_SEPARATOR.__LINE__, 405);
 							}
-							else if(is_array($whiteList[$resourcePath][$this->requestMethod])){
-								if(!in_array($allowUser, $whiteList[$resourcePath][$this->requestMethod])){
+							else if(is_array($whiteList[$resourcePath]["Method ".$this->requestMethod])){
+								if(0 < count(array_diff($paramKeys, $whiteList[$resourcePath]["Method ".$this->requestMethod][$allowUser]))){
 									// アクセスエラー！
 									throw new RESTException(__CLASS__.PATH_SEPARATOR.__METHOD__.PATH_SEPARATOR.__LINE__, 405);
 								}
 							}
-							else if ("*" !== $whiteList[$resourcePath][$this->requestMethod]){
+							else if ("*" !== $whiteList[$resourcePath]["Method ".$this->requestMethod]){
 								// アクセスエラー！
 								throw new RESTException(__CLASS__.PATH_SEPARATOR.__METHOD__.PATH_SEPARATOR.__LINE__, 405);
 							}
