@@ -1,4 +1,3 @@
-
 #import "NSString+UTF8URLEncoding.h"
 
 @implementation NSString (UTF8URLEncodingConvert)

@@ -1,10 +1,4 @@
-//
-//  UIImage+custom.h
-//
-//  Created by saimushi on 2013/10/13.
-//
-
-#import "UIView+property.h"
+#import "UIImage+custom.h"
 
 @implementation UIImage (custom)
 

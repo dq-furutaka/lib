@@ -1,10 +1,10 @@
 //
-//  MMessages.m
-//
-//  Created by saimushi on 2014/11/18.
+//  MMessages.h
 //  Version:1.0
 //
-
+//  Created by saimushi on 2014/11/18.
+//  Copyright (c) 2014 saimushi. All rights reserved.
+//
 #import <UIKit/UIKit.h>
 
 //#define MMESSAGE_NOTIFY_BACKGROUND_COLOR [UIColor colorWithRed:0.60 green:1.00 blue:0.60 alpha:0.9f]

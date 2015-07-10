@@ -32,7 +32,7 @@
 
 // フォントカラー（デフォルトはiOSの標準風 #146dfa）
 #define MACTIONBUTTON_FONT_COLOR [UIColor colorWithRed:0.078 green:0.427 blue:0.980 alpha:1.00]
-
+#define MACTIONBUTTON_CANCEL_INDEX -1
 
 @interface MActionsheetButtonView : UIView
 

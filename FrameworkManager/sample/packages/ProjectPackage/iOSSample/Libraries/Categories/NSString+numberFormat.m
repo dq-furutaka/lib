@@ -1,4 +1,3 @@
-
 #import "NSString+numberFormat.h"
 
 @implementation NSString (numberFormat)

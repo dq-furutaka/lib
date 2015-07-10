@@ -1,10 +1,3 @@
-//
-//  AES.m
-//
-//  Created by saimushi on 2014/06/17.
-//  Copyright (c) 2014年 saimushi. All rights reserved.
-//
-
 #import "AES.h"
 #import "Crypto.h"
 #import "NSString+bin2hex.h"

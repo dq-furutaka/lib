@@ -1,9 +1,4 @@
-//
-//  Created by saimushi on 2013/02/04.
-//  Copyright (c) 2013年 saimushi. All rights reserved.
-//
-
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @interface UIScreen (property)
 

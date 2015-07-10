@@ -1,3 +1,6 @@
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+
 @interface NSString (textsize)
 - (CGRect)textFrameWithFont:(UIFont *)font label:(UILabel *)label padding:(CGFloat)padding;
 - (CGSize)textFrameWithFont:(UIFont *)font viewWidth:(CGFloat)viewWidth padding:(CGFloat)padding;

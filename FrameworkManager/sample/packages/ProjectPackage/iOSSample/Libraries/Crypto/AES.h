@@ -2,9 +2,7 @@
 //  AES.h
 //  AES128CBC16進数出力固定の簡易AES(PHP・JAVAと親和している状態です)
 //
-//  Created by saimushi on 2014/06/17.
-//  Copyright (c) 2014年 saimushi. All rights reserved.
-//
+#import <Foundation/Foundation.h>
 
 @interface AES : NSObject
 {

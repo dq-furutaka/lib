@@ -130,6 +130,7 @@
 {
     UIButton *pushedButton = (UIButton *)sender;
     pushedButton.backgroundColor = BUTTON_BG_HL_COLOR;
+    _compBlock(MACTIONBUTTON_CANCEL_INDEX);
     [self hidePicker];
     return;
 }

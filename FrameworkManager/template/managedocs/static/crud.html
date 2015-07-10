@@ -191,8 +191,12 @@
 						var crudEnabled = true;
 						crud(crudBasePath, "target_project="+targetProject, function(mode){
 							// crudJS終了後に処理をしたい場合はココに記述
-							$("#crudmain input").attr("class", $("#crudmain input").attr("class") + " form-control");
-							$("#crudmain input[type='submit']").attr("class", $("#crudmain input").attr("class") + " btn btn-success");
+							$("#crudmain input").attr("class", classStr + " form-control");
+							var classStr = $("#crudmain input").attr("class");
+							$("#crudmain input[type='submit']").attr("class", classStr + " btn btn-success");
+							if ($("#crudmain input[type='submit'][value='DELETE']")){
+								$("#crudmain input[type='submit'][value='DELETE']").attr("class", classStr + " btn btn-danger");
+							}
 							if("tablelist" == mode){
 								$("#tablelist h2").parent().prepend("<p>" + $("#tablelist h2").text() + "</p>");
 								$("#tablelist h2").remove();

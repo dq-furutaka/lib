@@ -1,7 +1,6 @@
 //
 // NSString+Crypto.m
 //
-
 #import "NSString+Crypto.h"
 #import "NSData+Crypto.h"
 

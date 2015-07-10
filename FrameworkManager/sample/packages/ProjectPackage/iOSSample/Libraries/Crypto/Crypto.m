@@ -1,10 +1,3 @@
-//
-//  Crypto.m
-//
-//  Created by XXX on 12/06/13.
-//  Copyright (c) 2012年 XXX. All rights reserved.
-//
-
 #import "Crypto.h"
 
 @implementation Crypto

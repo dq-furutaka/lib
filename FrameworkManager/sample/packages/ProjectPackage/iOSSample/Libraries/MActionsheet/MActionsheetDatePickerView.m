@@ -102,7 +102,17 @@
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     // 和暦回避
     [formatter setLocale:[NSLocale systemLocale]];
-    [formatter setCalendar:[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar]];
+    if([[[UIDevice currentDevice] systemVersion] compare:@"8.0" options:NSNumericSearch] == NSOrderedAscending){
+        // i0S7以前の処理
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [formatter setCalendar:[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar]];
+#pragma clang diagnostic pop
+    }
+    else {
+        // i0S8以前の処理
+        [formatter setCalendar:[[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian]];
+    }
     NSLog(@"%@", [[NSLocale preferredLanguages] objectAtIndex:0]);
     NSLog(@"%@", [NSLocale currentLocale].debugDescription);
     NSLog(@"%@", [NSCalendar currentCalendar].debugDescription);

@@ -981,7 +981,7 @@ abstract class RestControllerBase extends APIControllerBase implements RestContr
 										// 次へリンク
 										$basehtml .= '<td class="list-paginglink"><a href="'.$URIs[0].'?LIMIT='.$requestParams['LIMIT'].'&OFFSET='.((int)$requestParams['OFFSET']+(int)$requestParams['LIMIT']).'&total='.$requestParams['total'].'&ORDER='.rawurlencode($requestParams['ORDER']).'&LIKE='.rawurlencode($requestParams['LIKE']).'">&gt;</a></td>'.PHP_EOL;
 										// 終端リンク
-										$basehtml .= '<td class="list-paginglink"><a href="'.$URIs[0].'?LIMIT='.$requestParams['LIMIT'].'&OFFSET='.(floor((int)$requestParams['total']/(int)$requestParams['LIMIT'])*(int)$requestParams['LIMIT']).'&total='.$requestParams['total'].'&ORDER='.rawurlencode($requestParams['ORDER']).'&LIKE='.rawurlencode($requestParams['LIKE']).'">&gt;&gt;</a></td>'.PHP_EOL;
+										$basehtml .= '<td class="list-paginglink"><a href="'.$URIs[0].'?LIMIT='.$requestParams['LIMIT'].'&OFFSET='.((ceil((int)$requestParams['total']/(int)$requestParams['LIMIT'])-1)*(int)$requestParams['LIMIT']).'&total='.$requestParams['total'].'&ORDER='.rawurlencode($requestParams['ORDER']).'&LIKE='.rawurlencode($requestParams['LIKE']).'">&gt;&gt;</a></td>'.PHP_EOL;
 									}
 									$basehtml .= '</tr></table>'.PHP_EOL;
 								}

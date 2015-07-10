@@ -1,4 +1,3 @@
-
 #import "NSString+textsize.h"
 
 @implementation NSString (textsize)

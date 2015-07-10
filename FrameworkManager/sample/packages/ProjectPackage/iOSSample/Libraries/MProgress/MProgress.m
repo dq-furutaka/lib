@@ -94,22 +94,22 @@
     
     // ローディング画像をセット
     UIImage *loadingImage = [[UIImage alloc] init];
-    if (ANIMATION_TYPE == 1) {
+    if (MPROGRESS_ANIMATION_TYPE == 1) {
         loadingImage = [UIImage imageNamed:argLoadingImageName];
     } else {
         loadingImage = [UIImage imageNamed:[NSString stringWithFormat:@"%@1.png", argLoadingImageName]];
     }
 
     // ローディングビューをセット
-    CGFloat loadingViewWidth  = loadingImage.size.width + MARGIN;
-    CGFloat loadingViewHeight = loadingImage.size.height + MARGIN;
+    CGFloat loadingViewWidth  = loadingImage.size.width + MPROGRESS_MARGIN;
+    CGFloat loadingViewHeight = loadingImage.size.height + MPROGRESS_MARGIN;
     CGSize mainScreenSize = [[UIScreen mainScreen] applicationFrame].size;
     _lodingView = [[UIView alloc] init];
     _lodingView.frame = CGRectMake((mainScreenSize.width - loadingViewWidth)/2,
                                    (mainScreenSize.height - loadingViewHeight)/2,
                                    loadingViewWidth,
                                    loadingViewHeight);
-    _lodingView.backgroundColor    = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:0.9];
+    _lodingView.backgroundColor    = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:MPROGRESS_BACKGROUND_ALPHA];
     _lodingView.layer.cornerRadius = 5.0f;
     [self addSubview:_lodingView];
     
@@ -124,7 +124,7 @@
     [_lodingView addSubview:lodingImageView];
     
     // アニメーションタイプが1であれば、画像を回転
-    if (ANIMATION_TYPE == 1) {
+    if (MPROGRESS_ANIMATION_TYPE == 1) {
         [UIView animateWithDuration:0.5f
                               delay:0.5f
                             options:UIViewAnimationOptionRepeat
@@ -140,7 +140,7 @@
     // アニメーションタイプが2であれば、画像を入れ替え
     } else {
         NSMutableArray *rotationImageArray = [NSMutableArray array];
-        for (NSInteger i = 1; i < IMAGE_NUM + 1; i++) {
+        for (NSInteger i = 1; i < MPROGRESS_IMAGE_NUM + 1; i++) {
             UIImage *rotationImage = [UIImage imageNamed:[NSString stringWithFormat:@"%@%d", argLoadingImageName, (int)i]];
             [rotationImageArray addObject:rotationImage];
         }

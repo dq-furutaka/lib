@@ -1,8 +1,3 @@
-//
-//  Created by saimushi on 2013/02/04.
-//  Copyright (c) 2013年 saimushi. All rights reserved.
-//
-
 #import "UIView+position.h"
 
 @implementation UIView (position)

@@ -1,3 +1,5 @@
+#import "NSString+bin2hex.h"
+
 @implementation NSString (HexStringConvert)
 
 +(NSString*) stringHexWithData:(NSData*)data

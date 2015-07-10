@@ -2,9 +2,8 @@
 //  MMessages.m
 //
 //  Created by saimushi on 2014/11/18.
-//  Copyright (c) 2014年 cybird. All rights reserved.
+//  Copyright (c) 2014 saimushi. All rights reserved.
 //
-
 #import "MMessages.h"
 
 

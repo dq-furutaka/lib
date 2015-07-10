@@ -1,10 +1,3 @@
-//
-//  Crypto.h
-//
-//  Created by XXX on 12/06/13.
-//  Copyright (c) 2012年 XXX. All rights reserved.
-//
-
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonCryptor.h>
 #import <CommonCrypto/CommonDigest.h>

@@ -1,10 +1,3 @@
-//
-//  MProductAgent.h
-//
-//  Created by saimushi on 2014/11/27.
-//  Version:1.0
-
-
 #import <StoreKit/StoreKit.h>
 
 

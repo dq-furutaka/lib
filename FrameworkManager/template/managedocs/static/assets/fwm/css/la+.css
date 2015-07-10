@@ -92,9 +92,9 @@ a:active {
 
 .plojectlist-block li {
 	padding: 5px;
-	}
+}
 
-.form-control {
+input.form-control[type="text"], input.form-control[type="password"] {
 	color: #333333;
 }
 

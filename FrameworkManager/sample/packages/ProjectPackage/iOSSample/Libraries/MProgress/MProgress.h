@@ -33,13 +33,24 @@
 #import <UIKit/UIKit.h>
 
 // 1:回転 2:複数の画像を順番に表示
-#define ANIMATION_TYPE 1
+#ifndef MPROGRESS_ANIMATION_TYPE
+#define MPROGRESS_ANIMATION_TYPE 1
+#endif
 
 // 2の場合に使う画像数
-#define IMAGE_NUM  1
+#ifndef MPROGRESS_IMAGE_NUM
+#define MPROGRESS_IMAGE_NUM  1
+#endif
 
 // 画像のスペース
-#define MARGIN 50.0
+#ifndef MPROGRESS_MARGIN
+#define MPROGRESS_MARGIN 50.0
+#endif
+
+// 背景の透過度
+#ifndef MPROGRESS_BACKGROUND_ALPHA
+#define MPROGRESS_BACKGROUND_ALPHA 0.0
+#endif
 
 @interface MProgress : UIView
 

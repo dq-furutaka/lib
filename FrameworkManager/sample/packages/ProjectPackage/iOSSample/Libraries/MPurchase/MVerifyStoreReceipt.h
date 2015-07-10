@@ -40,6 +40,7 @@
  */
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 extern NSString *kReceiptBundleIdentifer;
 extern NSString *kReceiptBundleIdentiferData;
